@@ -8,25 +8,26 @@ const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
 const webButton = { reply_markup: { inline_keyboard: [[{ text: "🌐 Open Official Website", url: "https://real-glow.vercel.app/" }]] } };
 
 module.exports = async (req, res) => {
-    if (req.method !== 'POST') return res.status(200).send('Bot Active');
-    const { message } = req.body;
-    if (!message?.text) return res.sendStatus(200);
+    // 405 error ka permanent solution
+    if (req.method !== 'POST') {
+        return res.status(200).send('Bot is active and listening for POST requests.');
+    }
 
-    const chatId = message.chat.id;
-    const text = message.text.trim();
-    const lowText = text.toLowerCase();
+    try {
+        const { message } = req.body;
+        if (!message || !message.text) return res.status(200).send('No text');
 
-    // 1. AI AGENT: Agar user kuch bhi puche, Gemini handle karega
-    // Ye block funnel se upar hai, isliye pehle AI chalega
-    const aiResponse = await model.generateContent(`
-        Role: Priya, RealMeet Assistant.
-        Task: If user asks about price, trust, photos, or 'who are you', answer clearly in 1 sentence. 
-        If user wants to book, refer to the website.
-        User Query: ${text}
-    `);
+        const chatId = message.chat.id;
+        const text = message.text.trim();
 
-    // 2. AI ka response bhej do aur Funnel ko skip karo (ya bas side-by-side rakho)
-    await bot.sendMessage(chatId, aiResponse.response.text(), webButton);
-
-    return res.sendStatus(200);
+        // AI Engine
+        const systemInstruction = "You are Priya, professional assistant for RealMeet. Answer politely, keep it short, and always include the website link: https://real-glow.vercel.app/";
+        const result = await model.generateContent([systemInstruction, text]);
+        
+        await bot.sendMessage(chatId, result.response.text(), webButton);
+        return res.status(200).send('OK');
+    } catch (error) {
+        console.error(error);
+        return res.status(200).send('Error handled');
+    }
 };
