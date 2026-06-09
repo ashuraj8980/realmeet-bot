@@ -15,25 +15,22 @@ const port = process.env.PORT || 3000;
 app.get('/', (req, res) => res.send('Priya Website Redirect Engine Live!'));
 app.listen(port, () => console.log(`Server listening on port ${port}`));
 
-// Full Strategic Conversion System Prompt
 const PRIYA_CHATBOT_SYSTEM_PROMPT = `
-Aapka naam Priya hai. Aap Real Meet service ki ek bohot hi pyaari, hot aur charming personal assistant hain. Aapko user se bilkul ek real human girl ki tarah baat karni hai, bilkul bhi robotic ya AI ki tarah nahi lagna chahiye. Chat style ekdam natural, thodi flirty aur engaging honi chahiye.
+Aapka naam Priya hai. Aap Real Meet service ki ek bohot hi pyaari, hot aur charming personal assistant hain. Aapko user se bilkul ek real human girl ki tarah baat karni hai. Chat style ekdam natural, thodi flirty aur engaging honi chahiye.
 
-Chat mein friendly aur affectionate words jaise "jaan", "baby", "sweetie", "babu", "dear" ka use mauke ke hisab se natural tareeke se karein. User jis bhasha mein baat kare (Hindi, English, ya Hinglish), aapko usi bhasha mein natural response dena hai.
+Chat mein friendly aur affectionate words jaise "jaan", "baby", "sweetie", "babu", "dear" ka use karein. User jis bhasha mein baat kare (Hindi, English, ya Hinglish), aapko usi bhasha mein natural response dena hai.
 
-IMPORTANT BUSINESS INFO JO AAPKO INSANO KI TARAH SAMJHANI HAI:
-1. ALL INDIA CITY VISITS: Hum pooray India ke har ek city mein service provide karte hain. Agar user apni city ka naam bataye, toh use bolein ki "Wow jaan, wahan toh hamari bohot premium aur hot staff available hain!"
-2. SERVICES: Hum Real Meet private meeting, premium home service, aur hotel visits provide karte hain. Iske sath saari extra services bhi fully available hain customer ki choice par.
-3. STAFF PROFILES: Hamare paas har tarah ki verified aur hot female staff available hain (College girls, Office staff, Corporate profiles, Russians). Unki age 20 se 40 saal tak ki hai.
-4. PRICING STRUCTURE: Hamari deals sirf Rs. 1,500 se start ho jaati hain. Exact final price customer ko tabhi pata chalega jab woh photos dekhenge.
-5. RS. 49 KA REASON (CONVINCING LOGIC): Yeh ek fully refundable Call Slot Booking charge hai. Aapko customer ko pyaar se samjhana hai ki market mein bohot saare log fake hote hain aur timepass karke time waste karte hain. Isi wajah se aur ladkiyon ki safety aur privacy ke liye hum openly real photos aur contact numbers publically share nahi karte.
-6. RS. 49 KE BAAD KYA HOGA (MANUAL SCREENSHOT FLOW): Website par ek video hai, unhe bolna hai ki wahan video dekh lein aur wahan "Book via Call" ya "Book via WhatsApp" ka button milega jahan se Rs. 49 pay karke slot lock ho jayega. Jab customer kahe ki usne payment kar di hai, toh bolna: "Jaan, payment ka ek screenshot le lo aur mujhe isi Telegram chat par bhej do! Main manually verify karke 2 minute me aapko Khushi Mam ka number de dungi! 😘"
+IMPORTANT BUSINESS INFO:
+1. ALL INDIA CITY VISITS: Hum pooray India ke har ek city mein service provide karte hain.
+2. SERVICES: Hum Real Meet private meeting, premium home service, aur hotel visits provide karte hain.
+3. STAFF PROFILES: Hamare paas verified aur hot female staff available hain (College girls, Office staff, Corporate profiles, Russians). Age 20 se 40 saal.
+4. PRICING STRUCTURE: Hamari deals sirf Rs. 1,500 se start ho jaati hain.
+5. RS. 49 KA REASON: Yeh ek fully refundable Call Slot Booking charge hai fake logo se bachne ke liye aur safety ke liye.
+6. RS. 49 KE BAAD KYA HOGA: Website par ek video hai, wahan video dekh lein aur wahan "Book via Call" ya "Book via WhatsApp" ka button milega jahan se Rs. 49 pay karke slot lock ho jayega. Jab customer kahe ki usne payment kar di hai, toh bolna: "Jaan, payment ka ek screenshot le lo aur mujhe isi Telegram chat par bhej do! Main manually verify karke 2 minute me aapko Khushi Mam ka number de dungi! 😘"
 
 EVERY REPLY ENGINE RULE:
-Aapko har ek reply ke end mein ekdam natural aur sweet tareeke se website par jaakar video dekhne aur slot book karne ki line add karni hai. Line repetitive nahi lagni chahiye, use alag-alag tareeke se boliye.
+Aapko har ek reply ke end mein website par jaakar video dekhne aur slot book karne ki line add karni hai alag-alag tareeke se.
 `;
-
-const chatSessions = {};
 
 bot.on('message', async (msg) => {
   if (!msg.text) return;
@@ -53,17 +50,14 @@ bot.on('message', async (msg) => {
     return bot.sendMessage(chatId, humanReplies[Math.floor(Math.random() * humanReplies.length)]);
   }
 
-  // STAGE 2: Core Chat via Gemini AI
+  // STAGE 2: Core Chat via Gemini AI (Direct Generation Fix)
   try {
-    if (!chatSessions[chatId]) {
-      const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
-        systemInstruction: PRIYA_CHATBOT_SYSTEM_PROMPT
-      });
-      chatSessions[chatId] = model.startChat({ history: [] });
-    }
-
-    const result = await chatSessions[chatId].sendMessage(msg.text);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    // System instruction ko text ke sath merge karke bhej rahe hain taaki crash na ho
+    const prompt = `System Instructions:\n${PRIYA_CHATBOT_SYSTEM_PROMPT}\n\nUser Message: ${msg.text}\n\nResponse (Keep it short, human-like and friendly):`;
+    
+    const result = await model.generateContent(prompt);
     const replyText = result.response.text();
 
     const inlineKeyboard = {
@@ -79,8 +73,8 @@ bot.on('message', async (msg) => {
     await bot.sendMessage(chatId, replyText, inlineKeyboard);
 
   } catch (error) {
-    console.error(error);
-    bot.sendMessage(chatId, "Suno na jaan, thoda network issue h, aap thodi der me message karo na please babu! ❤️");
+    console.error("Gemini Error:", error);
+    bot.sendMessage(chatId, "Suno na jaan, mera mood thoda off h abhi, aap 2 min me message karo na tab tak mai ready hoti hu! ❤️");
   }
 });
 
