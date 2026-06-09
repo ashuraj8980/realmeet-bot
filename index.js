@@ -5,28 +5,33 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const token = process.env.BOT_TOKEN;
 const geminiApiKey = process.env.GEMINI_API_KEY;
+const url = process.env.RENDER_EXTERNAL_URL || 'https://realmeet-bot-1.onrender.com';
 
-// Base configuration without auto-polling to clear webhook first
+// Setup bot with Webhook mode instead of Polling to stop 409 Conflicts completely
 const bot = new TelegramBot(token);
 const genAI = new GoogleGenerativeAI(geminiApiKey);
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.get('/', (req, res) => res.send('Priya Direct Engine Live!'));
+app.use(express.json());
+
+// Main webhook route for Telegram
+app.post(`/bot${token}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
+
+app.get('/', (req, res) => res.send('Priya Direct Engine Live via Webhook!'));
+
 app.listen(port, async () => {
   console.log(`Server listening on port ${port}`);
-  
   try {
-    // 100% Forcefully delete any old webhook configurations on Telegram side
-    await bot.deleteWebHook({ drop_pending_updates: true });
-    console.log("Old webhooks dropped successfully.");
-    
-    // Now safely start fresh polling
-    await bot.startPolling();
-    console.log("Priya Core Engine Fully Operational with Clean Polling...");
-  } catch (err) {
-    console.error("Initialization Error:", err);
+    // Set the fresh webhook URL on Telegram
+    await bot.setWebHook(`${url}/bot${token}`);
+    console.log(`Webhook successfully linked to: ${url}/bot${token}`);
+  } catch (error) {
+    console.error("Webhook registration failed:", error);
   }
 });
 
@@ -65,22 +70,15 @@ bot.on('message', async (msg) => {
     return bot.sendMessage(chatId, humanReplies[Math.floor(Math.random() * humanReplies.length)]);
   }
 
-  // STAGE 2: Core Chat via Gemini AI
+  // STAGE 2: Solid Gemini Execution (Fixed to prevent content object structure errors)
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
-    const contents = [
-      {
-        role: 'user',
-        parts: [
-          { text: `${PRIYA_CHATBOT_SYSTEM_PROMPT}\n\nUser Message: ${msg.text}\n\nResponse:` }
-        ]
-      }
-    ];
-
-    const result = await model.generateContent({ contents });
-    const response = await result.response;
-    const replyText = response.text().trim();
+    // Direct robust text composition for prompt delivery
+    const completePrompt = `${PRIYA_CHATBOT_SYSTEM_PROMPT}\n\nUser Message: ${msg.text}\n\nPriya's Response:`;
+    
+    const result = await model.generateContent(completePrompt);
+    const replyText = result.response.text().trim();
 
     const inlineKeyboard = {
       reply_markup: {
@@ -95,7 +93,7 @@ bot.on('message', async (msg) => {
     await bot.sendMessage(chatId, replyText, inlineKeyboard);
 
   } catch (error) {
-    console.error("Gemini Error Details:", error);
+    console.error("Gemini Error Handler:", error);
     bot.sendMessage(chatId, "Suno na jaan, thoda network issue h, aap 2 min me message karo na please babu! ❤️");
   }
 });
