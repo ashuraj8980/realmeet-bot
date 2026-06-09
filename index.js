@@ -8,11 +8,10 @@ const url = process.env.RENDER_EXTERNAL_URL || 'https://realmeet-bot-1.onrender.
 const geminiKey = process.env.GEMINI_API_KEY;
 
 const bot = new TelegramBot(token, { polling: false });
-const app = report => express();
 const expressApp = express();
 expressApp.use(express.json());
 
-// Initialize Gemini AI
+// FIXED: Sahi tareeqe se Gemini AI initialize kiya
 const ai = new GoogleGenAI({ apiKey: geminiKey });
 const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -108,7 +107,6 @@ bot.on('message', async (msg) => {
   const session = userSessions[chatId];
 
   // ==================== HYBRID AI DETECTION ====================
-  // If the user is asking random things, name, photos, or changes language, Gemini AI triggers instantly
   const aiTriggers = ['name', 'kaun ho', 'kon ho', 'pic', 'photo', 'bhejo', 'service', 'massage', 'extra', 'fake', 'scam', 'hindi', 'english', 'boring', 'gawar', 'what', 'paisa', 'price', 'rate'];
   
   if (aiTriggers.some(trigger => textLower.includes(trigger)) || session.step === 'CONVERSION') {
@@ -157,4 +155,3 @@ bot.on('message', async (msg) => {
     return;
   }
 });
-    
