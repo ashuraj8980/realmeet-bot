@@ -20,7 +20,7 @@ app.post(`/bot${token}`, (req, res) => {
   res.sendStatus(200);
 });
 
-app.get('/', (req, res) => res.send('Priya Webhook Engine fully synced!'));
+app.get('/', (req, res) => res.send('Priya Engine Operational!'));
 
 app.listen(port, async () => {
   console.log(`Server listening on port ${port}`);
@@ -67,16 +67,15 @@ bot.on('message', async (msg) => {
     return bot.sendMessage(chatId, humanReplies[Math.floor(Math.random() * humanReplies.length)]);
   }
 
-  // STAGE 2: Bulletproof Gemini Integration
+  // STAGE 2: Direct Plain Prompt Text Generation
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
-    // Using clean text property input required by the latest SDK
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: `${PRIYA_CHATBOT_SYSTEM_PROMPT}\n\nUser Message: ${msg.text}\n\nPriya:` }] }]
-    });
-
-    // Handle extraction safely
+    // Direct raw string mapping template (Crash bypass solution)
+    const rawPromptString = `${PRIYA_CHATBOT_SYSTEM_PROMPT}\n\nUser Question: ${msg.text}\n\nResponse:`;
+    
+    const result = await model.generateContent(rawPromptString);
+    
     if (result && result.response) {
       const replyText = result.response.text().trim();
 
@@ -92,11 +91,11 @@ bot.on('message', async (msg) => {
 
       await bot.sendMessage(chatId, replyText, inlineKeyboard);
     } else {
-      throw new Error("Empty response object from Gemini");
+      throw new Error("Invalid Response Object Structure");
     }
 
   } catch (error) {
-    console.error("Gemini Engine Runtime Crash Log:", error);
+    console.error("Gemini Direct Generation Failure:", error);
     bot.sendMessage(chatId, "Suno na jaan, thoda network issue h, aap 2 min me message karo na please babu! ❤️");
   }
 });
