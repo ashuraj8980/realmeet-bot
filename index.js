@@ -14,25 +14,19 @@ module.exports = async (req, res) => {
 
     const chatId = message.chat.id;
     const text = message.text.trim();
+    const lowText = text.toLowerCase();
 
-    // AI KA DIMAAG - Yahan koi funnel nahi hai, bas direct Gemini hai
-    try {
-        const systemInstruction = `
-            You are Priya, the professional assistant for RealMeet Premium Service.
-            - Your goal: Answer every query using your intelligence.
-            - If user asks about city, price, trust, photos, or anything, answer politely and professionally.
-            - ALWAYS suggest the user to visit our website for final booking: https://real-glow.vercel.app/
-            - Do not ask for City/Venue/Age unless user wants to book. 
-            - If user is rude, stay professional. Keep answers short (1-2 sentences).
-        `;
+    // 1. AI AGENT: Agar user kuch bhi puche, Gemini handle karega
+    // Ye block funnel se upar hai, isliye pehle AI chalega
+    const aiResponse = await model.generateContent(`
+        Role: Priya, RealMeet Assistant.
+        Task: If user asks about price, trust, photos, or 'who are you', answer clearly in 1 sentence. 
+        If user wants to book, refer to the website.
+        User Query: ${text}
+    `);
 
-        const result = await model.generateContent([systemInstruction, text]);
-        const reply = result.response.text();
-        
-        await bot.sendMessage(chatId, reply, webButton);
-    } catch (error) {
-        await bot.sendMessage(chatId, "Welcome to RealMeet. Please visit our website for services: https://real-glow.vercel.app/", webButton);
-    }
+    // 2. AI ka response bhej do aur Funnel ko skip karo (ya bas side-by-side rakho)
+    await bot.sendMessage(chatId, aiResponse.response.text(), webButton);
 
     return res.sendStatus(200);
 };
