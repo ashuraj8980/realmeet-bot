@@ -7,7 +7,6 @@ const token = process.env.BOT_TOKEN;
 const geminiApiKey = process.env.GEMINI_API_KEY;
 const url = process.env.RENDER_EXTERNAL_URL || 'https://realmeet-bot-1.onrender.com';
 
-// Setup bot with Webhook mode instead of Polling to stop 409 Conflicts completely
 const bot = new TelegramBot(token);
 const genAI = new GoogleGenerativeAI(geminiApiKey);
 
@@ -16,18 +15,16 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Main webhook route for Telegram
 app.post(`/bot${token}`, (req, res) => {
   bot.processUpdate(req.body);
   res.sendStatus(200);
 });
 
-app.get('/', (req, res) => res.send('Priya Direct Engine Live via Webhook!'));
+app.get('/', (req, res) => res.send('Priya Webhook Engine fully synced!'));
 
 app.listen(port, async () => {
   console.log(`Server listening on port ${port}`);
   try {
-    // Set the fresh webhook URL on Telegram
     await bot.setWebHook(`${url}/bot${token}`);
     console.log(`Webhook successfully linked to: ${url}/bot${token}`);
   } catch (error) {
@@ -70,30 +67,36 @@ bot.on('message', async (msg) => {
     return bot.sendMessage(chatId, humanReplies[Math.floor(Math.random() * humanReplies.length)]);
   }
 
-  // STAGE 2: Solid Gemini Execution (Fixed to prevent content object structure errors)
+  // STAGE 2: Bulletproof Gemini Integration
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
-    // Direct robust text composition for prompt delivery
-    const completePrompt = `${PRIYA_CHATBOT_SYSTEM_PROMPT}\n\nUser Message: ${msg.text}\n\nPriya's Response:`;
-    
-    const result = await model.generateContent(completePrompt);
-    const replyText = result.response.text().trim();
+    // Using clean text property input required by the latest SDK
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: `${PRIYA_CHATBOT_SYSTEM_PROMPT}\n\nUser Message: ${msg.text}\n\nPriya:` }] }]
+    });
 
-    const inlineKeyboard = {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: "🌐 Website par Video dekho & Book karo", url: "https://real-glow.vercel.app/" }
+    // Handle extraction safely
+    if (result && result.response) {
+      const replyText = result.response.text().trim();
+
+      const inlineKeyboard = {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "🌐 Website par Video dekho & Book karo", url: "https://real-glow.vercel.app/" }
+            ]
           ]
-        ]
-      }
-    };
+        }
+      };
 
-    await bot.sendMessage(chatId, replyText, inlineKeyboard);
+      await bot.sendMessage(chatId, replyText, inlineKeyboard);
+    } else {
+      throw new Error("Empty response object from Gemini");
+    }
 
   } catch (error) {
-    console.error("Gemini Error Handler:", error);
+    console.error("Gemini Engine Runtime Crash Log:", error);
     bot.sendMessage(chatId, "Suno na jaan, thoda network issue h, aap 2 min me message karo na please babu! ❤️");
   }
 });
