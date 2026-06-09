@@ -16,7 +16,7 @@ app.post(`/bot${token}`, (req, res) => {
   res.sendStatus(200);
 });
 
-app.get('/', (req, res) => res.send('Priya Zero-API Conversion Engine Live!'));
+app.get('/', (req, res) => res.send('Priya Ultimate Roadmap Engine Live!'));
 
 app.listen(port, async () => {
   console.log(`Server listening on port ${port}`);
@@ -28,26 +28,27 @@ app.listen(port, async () => {
   }
 });
 
-// User sessions state tracker
+// Real-time state memory storage for users
 const userSessions = {};
 
-// Simple text detector for language type
+// Simple language check helper
 function isEnglishText(text) {
-  const englishKeywords = ['where', 'price', 'want', 'avail', 'hotel', 'home', 'name', 'show', 'send', 'pic', 'girl'];
+  const englishKeywords = ['where', 'price', 'want', 'avail', 'hotel', 'home', 'name', 'show', 'send', 'pic', 'girl', 'rate', 'cost', 'how much'];
   return englishKeywords.some(word => text.toLowerCase().includes(word));
 }
 
-// Fake/Invalid Name Checker logic
+// Strict Real Name Checking Logic
 function isValidName(name) {
-  const invalidNames = ['bot', 'test', 'fake', 'abcd', 'admin', 'unknown', 'pussy', 'sex', 'fuck', 'user', 'human', 'nobody', 'no'];
+  const invalidNames = ['bot', 'test', 'fake', 'abcd', 'admin', 'unknown', 'user', 'human', 'nobody', 'no', 'ok', 'yes', 'haa', 'hi', 'hello', 'pussy', 'sex', 'fuck'];
   const cleaned = name.trim().toLowerCase();
   if (cleaned.length < 2 || cleaned.length > 15) return false;
   if (invalidNames.includes(cleaned)) return false;
+  // Check if name contains only alphabets (Hindi or English characters)
   if (/^[a-zA-Z\s]+$/.test(name) || /^[\u0900-\u097F\s]+$/.test(name)) return true;
   return false;
 }
 
-// Inline keyboard helper
+// Global Luxury Booking button template
 const bookingButton = {
   reply_markup: {
     inline_keyboard: [[{ text: "🌐 Website par Video dekho & Book karo", url: "https://real-glow.vercel.app/" }]]
@@ -61,7 +62,13 @@ bot.on('message', async (msg) => {
   const userText = msg.text.trim();
   const textLower = userText.toLowerCase();
 
-  // Initialize session if not exists
+  // Fresh Start Protocol
+  if (textLower === '/start') {
+    userSessions[chatId] = { step: 'ASK_CITY' };
+    return bot.sendMessage(chatId, "𝗪𝗵𝗶𝗰𝗵 𝗰𝗶𝘁𝘆/𝗔𝗿𝗲𝗮 𝗱𝗼 𝘆𝗼𝘂 𝘄𝗮𝗻𝘁 ? ✅️");
+  }
+
+  // Session Initialize if empty
   if (!userSessions[chatId]) {
     userSessions[chatId] = { step: 'ASK_CITY' };
   }
@@ -69,91 +76,105 @@ bot.on('message', async (msg) => {
   const session = userSessions[chatId];
   const isEng = isEnglishText(userText);
 
-  // GLOBAL PUSH TRIPPERS: Price/Photos script handles anytime anywhere
-  if (textLower.includes('price') || textLower.includes('charge') || textLower.includes('rate') || textLower.includes('kitna') || textLower.includes('paisa')) {
+  // 1. GLOBAL OVERRIDE TRIGGER: If Client asks for Price/Rates at any time
+  if (textLower.includes('price') || textLower.includes('charge') || textLower.includes('rate') || textLower.includes('kitna') || textLower.includes('paisa') || textLower.includes('rs')) {
     if (isEng) {
-      return bot.sendMessage(chatId, "Listen dear, our deals start from just Rs. 1,500 for 1 hour, Full night is around Rs. 6,999 and full day packages are also available. But every staff profile has a different rate depending on who you choose. ❤️ Please book your call slot from the website for Rs. 49, Khushi Mam will call you and explain everything with exact prices!", bookingButton);
+      return bot.sendMessage(chatId, "Listen honey, Khushi Mam will tell you everything on call because prices depend entirely on which specific profile you select. ❤️ If you insist, our basic deals start from Rs. 1,500 for 1 hour, Full Night packages are Rs. 6,999, and full day options are also available. Please book a call slot from the website so mam can explain properly!", bookingButton);
     } else {
-      return bot.sendMessage(chatId, "Suno na jaan, hamari deals sirf Rs. 1,500 se start ho jaati hain 1 hour ki, full night ka Rs. 6,999 hai aur day ka bhi package hai. Lekin ye charge sabka alag-alag hota hai babu, depend karta hai aap konsi profile select karte ho. 🥰 Aap ek baar website se call slot book kar lijiye taki mam aapko call par saari profiles aur unka exact price acche se samjha sakein!", bookingButton);
+      return bot.sendMessage(chatId, "Suno na jaan, mam batayegi saari details call par kyunki har ek profile aur staff ka alag-alag price hota hai babu, yeh poora depend karta hai aap konsi profile select karte ho. 🥰 Agar aap zidd kar rahe ho toh bata deti hu hamari deals waise sirf Rs. 1,500 se start hoti hain 1 hour ki, full night ka Rs. 6,999 hai aur day ka bhi package hai. Aap ek baar website se call slot book kar lijiye taki puri jankari mil sake aapko!", bookingButton);
     }
   }
 
+  // 2. GLOBAL OVERRIDE TRIGGER: If Client demands Photos/Profiles from the bot directly
   if (textLower.includes('pic') || textLower.includes('photo') || textLower.includes('profile') || textLower.includes('tum do') || textLower.includes('bhejo')) {
     if (isEng) {
-      return bot.sendMessage(chatId, "Baby, I receive 2000+ messages every day! Due to high privacy and safety rules, I cannot share girls' profiles openly here on chat. 🥺 If you are genuinely interested, just pay Rs. 49 to book a call slot on our website. Mam will send all active profiles directly to your WhatsApp! Only serious clients please.", bookingButton);
+      return bot.sendMessage(chatId, "Baby, I receive more than 2000+ messages every single day! Due to high privacy and safety reasons, I cannot share anyone's personal pics or profiles openly here on chat. 🥺 If you are interested, please pay Rs. 49 to book a call slot on our website. Khushi Mam will call you and send all active verified profiles directly to your WhatsApp!", bookingButton);
     } else {
-      return bot.sendMessage(chatId, "Mere paas din ke 2000+ messages aate hain jaan, main sabko kisi bhi staff ki privacy ke wajah se openly pic ya profile share nahi kar sakti babu. 🥺 Agar aap sach me interested ho toh please website se ₹49 pay karke call slot book kar lijiye, mam directly aapke WhatsApp par saari profiles bhej dengi aur call par baat bhi karwa dengi! 😘", bookingButton);
+      return bot.sendMessage(chatId, "Mere paas din ke 2000+ messages aate hain jaan, main sabko kisi bhi privacy ke wajah se openly pic ya profile share nahi kar sakti babu. 🥺 Agar aap interested hain toh Rs. 49 pay karke call slot book kar lijiye, mam directly aapko call karke aapke WhatsApp par saari profiles bhej dengi aur baat karwa dengi!", bookingButton);
     }
   }
 
-  // STEP-BY-STEP FLOW CONTROLLER
-  switch (session.step) {
-    case 'ASK_CITY':
-      session.step = 'CHECK_LOCATION';
-      return bot.sendMessage(chatId, "𝗪𝗵𝗶𝗰𝗵 𝗰𝗶𝘁𝘆/𝗔𝗿𝗲𝗮 𝗱𝗼 𝘆𝗼𝘂 𝘄𝗮𝗻𝘁 ? ✅️");
+  // 3. ROADMAP FUNNEL EXECUTION STEP-BY-STEP
+  
+  // STEP 1: Ask and Check City/Location Existence
+  if (session.step === 'ASK_CITY') {
+    // Basic existence verification (Filter out junk or single letter clicks)
+    if (userText.length < 3 || textLower === 'hi' || textLower === 'hello' || textLower === 'hey' || textLower === 'ok') {
+      return bot.sendMessage(chatId, "𝗪𝗵𝗶𝗰𝗵 𝗰𝗶𝘁𝘆/𝗔𝗿𝗲𝗮 𝗱𝗼 𝘆𝗼𝘂 𝘄𝗮𝗻𝘁 ? ✅️\n\n(Please write your city or location name properly so I can check availability)");
+    }
+    
+    session.location = userText;
+    session.step = 'ASK_VENUE';
+    
+    if (isEng) {
+      return bot.sendMessage(chatId, `Yes, let me check... Great news! Our service is 100% available in ${userText} right now. We provide both home service and hotel service. Where do you want the service, at your home or at a hotel? 😉`);
+    } else {
+      return bot.sendMessage(chatId, `Haan ji jaan, main check kar leti hu... Waah, aapke area aur location ${userText} me hamari service ekdam available hai! 😍 Hamare paas home service aur hotel service dono mil jayegi. Aapko service kahan pe chahiye, aapke ghar ya hotel pe? 😉`);
+    }
+    return;
+  }
 
-    case 'CHECK_LOCATION':
-      // Basic check if input is too short to be a real location
-      if (userText.length < 3) {
-        return bot.sendMessage(chatId, isEng ? "Please enter a valid city or area name dear! 😊" : "Jaan, please sahi se apne City ya Area ka naam batao na! 😊");
-      }
-      session.location = userText;
-      session.step = 'ASK_VENUE';
-      if (isEng) {
-        return bot.sendMessage(chatId, `Yes baby, our services are 100% available in ${userText}! We provide both Home Service and Premium Hotel Service. Where do you want the service, at your home or a hotel? 😉`);
-      } else {
-        return bot.sendMessage(chatId, `Haan ji jaan, aapke area ${userText} me hamari service 100% available hai! 😍 Hamare paas Home Service aur Premium Hotel Service dono mil jayegi. Aapko service kahan par chahiye babu—aapke ghar par ya hotel par? 😉`);
-      }
+  // STEP 2: Ask for Venue (Home or Hotel)
+  if (session.step === 'ASK_VENUE') {
+    session.venue = userText;
+    session.step = 'ASK_PREFERENCE';
+    
+    if (isEng) {
+      return bot.sendMessage(chatId, "Ok perfect, available! What type of girl are you looking for, and how many years of age do you prefer? ❤️");
+    } else {
+      return bot.sendMessage(chatId, "Ok available hai! Aapko kis type ki girl chahiye aur kitni years ki honi chahiye? Mujhe batao ❤️");
+    }
+    return;
+  }
 
-    case 'ASK_VENUE':
-      session.venue = userText;
-      session.step = 'ASK_PREFERENCE';
-      if (isEng) {
-        return bot.sendMessage(chatId, "Ok dear, available! What type of girl are you looking for, and what age group do you prefer? ❤️");
-      } else {
-        return bot.sendMessage(chatId, "Ok jaan, done! Aapko kis type ki girl chahiye aur kitne years tak ki age honi chahiye? Mujhe batao ek baar ❤️");
-      }
+  // STEP 3: Handle Preference & Ask Name
+  if (session.step === 'ASK_PREFERENCE') {
+    session.preference = userText;
+    session.step = 'VERIFY_NAME';
+    
+    if (isEng) {
+      return bot.sendMessage(chatId, "Ok honey, that's completely available! May I please know your name to continue this chat? 🥰");
+    } else {
+      return bot.sendMessage(chatId, "Ok available hai, jaisi aapko chahiye bilkul waisi mil jayegi! Kya main aapka name jaan sakti hu chat continue karne ke liye? 🥰");
+    }
+    return;
+  }
 
-    case 'ASK_PREFERENCE':
-      session.preference = userText;
-      session.step = 'VERIFY_NAME';
+  // STEP 4: Verify Real Name and Pitch the Call Slot Link
+  if (session.step === 'VERIFY_NAME') {
+    if (!isValidName(userText)) {
       if (isEng) {
-        return bot.sendMessage(chatId, "Perfect, everything you want is available! May I please know your name to continue this chat? 🥰");
+        return bot.sendMessage(chatId, "Please tell me your real name dear, so I can confirm your location details properly! What is your real name? ❤️");
       } else {
-        return bot.sendMessage(chatId, "Aww ok jaan, ekdam perfect! Jaisa aapne bola waisi girl available ho jayegi. Kya main aapka pyaara sa naam jaan sakti hu chat continue karne ke liye? 🥰");
+        return bot.sendMessage(chatId, "Babu ye toh fake name lag rha hai, please apna real name ek baar confirm karwao na taaki chat save ho sake! Aapka sahi naam kya hai? ❤️");
       }
+    }
+    
+    session.name = userText;
+    session.step = 'FINAL_CONVERSION';
+    
+    if (isEng) {
+      return bot.sendMessage(chatId, `Ok ${userText} dear! Look, we have amazing female staff and profiles available right now near your area. If you want to select a girl's profile, you can book a call slot from this website and talk to Khushi Mam directly. Mam will give you all details on the call, explain prices, and send profiles to your WhatsApp! 😘`, bookingButton);
+    } else {
+      return bot.sendMessage(chatId, `Ok ${userText} dekhiye hamare paas aapke area aur location pe service ekdam available hai. Agar aap female staff and girl ki profile select karna chahte ho, toh aap is website se call slot book karke mam se call pe baat kar sakte ho. Call pe puri details bata degi mam, price wagera bhi bata degi aur aapko profiles bhi bhej degi aapke WhatsApp pe! 😘`, bookingButton);
+    }
+    return;
+  }
 
-    case 'VERIFY_NAME':
-      if (!isValidName(userText)) {
-        if (isEng) {
-          return bot.sendMessage(chatId, "Please tell me your real name dear, so I can save your booking details correctly! ❤️ What is your name?");
-        } else {
-          return bot.sendMessage(chatId, "Babu please apna real naam batao na, taaki main aapki booking entry sahi se ready kar saku! ❤️ Aapka naam kya hai?");
-        }
-      }
-      session.name = userText;
-      session.step = 'FINAL_CONVERSION';
-      if (isEng) {
-        return bot.sendMessage(chatId, `Ok ${userText} dear! Listen, we have amazing premium female staff available right now near your location. If you want to view profiles and select a girl, please go to our website and book a call slot. Khushi Mam will call you instantly, discuss all details, prices, and send active profiles directly to your WhatsApp! Click below to secure your slot. 😘`, bookingButton);
-      } else {
-        return bot.sendMessage(chatId, `Ok ${userText} ji, dekhiye hamare paas aapke area aur location pe premium female staff ekdam available hain. Agar aap unki profiles aur photos select karna chahte ho jaan, toh aap is website se call slot book karke Khushi mam se direct call pe baat kar sakte ho! Mam call pe saari details, price wagera sab samjha dengi aur aapke WhatsApp par live profiles bhi bhej dengi! 😘`, bookingButton);
-      }
+  // STEP 5: Continuous Retention / Payment Follow-up
+  if (session.step === 'FINAL_CONVERSION') {
+    if (isEng) {
+      return bot.sendMessage(chatId, `Listen ${session.name || 'dear'}, everything is verified near your location. Just go to the website, watch the short video and pay Rs. 49 to secure your call slot. Let's do it fast! ❤️`, bookingButton);
+    } else {
+      return bot.sendMessage(chatId, `Suno na ${session.name || 'jaan'}, aapke location par saari profiles ready hain. Aap jaldi se website par jaakar video dekh lijiye aur ₹49 pay karke apna call slot book kar lijiye, fir direct call connect ho jayegi babu! ❤️`, bookingButton);
+    }
+    return;
+  }
 
-    case 'FINAL_CONVERSION':
-      // Persistent nudge once they finish the funnel
-      if (isEng) {
-        return bot.sendMessage(chatId, `Dear ${session.name || 'babu'}, everything is set! Just click the link below, watch the short video guide and complete your refundable Rs. 49 call slot booking. Let's start the processing fast! ❤️`, bookingButton);
-      } else {
-        return bot.sendMessage(chatId, `Jaan ${session.name || 'babu'}, baaki sab set hai! Aap jaldi se niche diye link par jaakar choti si video dekh lo aur apna Rs. 49 ka call slot lock karo, fir seedha Khushi Mam ka call aayega aur direct profile transfer ho jayegi! Der mat karo babu. ❤️`, bookingButton);
-      }
-
-    default:
-      // Fallback fallback if user sends something completely random that bot doesn't get
-      if (isEng) {
-        return bot.sendMessage(chatId, "Honey, if you want any details or face issues, you can message Khushi Mam directly at support ID: @RealMeetSupport. But if you book your call slot from the website right now, you will get the priority number instantly to talk directly call! Click link below. ✨", bookingButton);
-      } else {
-        return bot.sendMessage(chatId, "Suno na jaan, agar aapko kuch samajh nahi aa raha toh aap hamari team ko is ID par message karke details le sakte ho: @RealMeetSupport. Lekin agar aap website se call slot book karte ho apna, toh bohot jaldi aapko number mil jayega aur aap seedha call par sab kuch discuss kar paoge babu! Ek baar try karo link niche hai. ✨", bookingButton);
-      }
+  // 4. SMART SYSTEM FALLBACK (If Bot doesn't understand user intent or gets stuck)
+  if (isEng) {
+    return bot.sendMessage(chatId, "Dear, if you didn't understand something, you can message our team directly at support ID: @RealMeetSupport for details. But if you book your call slot from the website right now, you will get the number instantly and can talk directly on call to discuss everything! ✨", bookingButton);
+  } else {
+    return bot.sendMessage(chatId, "Suno na jaan, agar aapko kuch samajh nahi aa raha toh aap is ID (@RealMeetSupport) pe message karke mam se iske bare me details le sakte ho. Lekin agar aap website se call slot book karte hai apna toh jaldi hi aapko number mil jayega aur aap seedha baat kr payenge call pe aur sab kuch discuss kar payenge! ✨", bookingButton);
   }
 });
-      
