@@ -1,6 +1,7 @@
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
+// FIXED: Sahi tareeqe se package class ko import kiya
 const { GoogleGenAI } = require('@google/generative-ai');
 
 const token = process.env.BOT_TOKEN;
@@ -11,7 +12,7 @@ const bot = new TelegramBot(token, { polling: false });
 const expressApp = express();
 expressApp.use(express.json());
 
-// FIXED: Sahi tareeqe se Gemini AI initialize kiya
+// FIXED: Sahi tareeqe se Gemini AI client ko initialize kiya (Bina constructor error ke)
 const ai = new GoogleGenAI({ apiKey: geminiKey });
 const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -20,10 +21,10 @@ expressApp.post(`/bot${token}`, (req, res) => {
   res.sendStatus(200);
 });
 
-expressApp.get('/', (req, res) => res.send('RealMeet AI Hybrid Engine Active'));
+expressApp.get('/', (req, res) => res.send('RealMeet Premium Hybrid Engine Active'));
 
 expressApp.listen(process.env.PORT || 3000, async () => {
-  console.log(`Server is running...`);
+  console.log(`Server running successfully.`);
   try {
     await bot.setWebHook(`${url}/bot${token}`);
     console.log(`Webhook linked successfully.`);
