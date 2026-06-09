@@ -1,57 +1,16 @@
-require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
-const express = require('express');
-// FIXED: Sahi tareeqe se package class ko import kiya
-const { GoogleGenAI } = require('@google/generative-ai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const token = process.env.BOT_TOKEN;
-const url = process.env.RENDER_EXTERNAL_URL || 'https://realmeet-bot-1.onrender.com';
 const geminiKey = process.env.GEMINI_API_KEY;
 
 const bot = new TelegramBot(token, { polling: false });
-const expressApp = express();
-expressApp.use(express.json());
 
-// FIXED: Sahi tareeqe se Gemini AI client ko initialize kiya (Bina constructor error ke)
-const ai = new GoogleGenAI({ apiKey: geminiKey });
+// Gemini AI Setup
+const ai = new GoogleGenerativeAI(geminiKey);
 const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-expressApp.post(`/bot${token}`, (req, res) => {
-  bot.processUpdate(req.body);
-  res.sendStatus(200);
-});
-
-expressApp.get('/', (req, res) => res.send('RealMeet Premium Hybrid Engine Active'));
-
-expressApp.listen(process.env.PORT || 3000, async () => {
-  console.log(`Server running successfully.`);
-  try {
-    await bot.setWebHook(`${url}/bot${token}`);
-    console.log(`Webhook linked successfully.`);
-  } catch (error) {
-    console.error("Webhook error:", error);
-  }
-});
-
 const userSessions = {};
-
-// Human-like message delay utility
-const sendDelayedMessage = (chatId, text, options = {}, delay = 1200) => {
-  return new Promise((resolve) => {
-    setTimeout(async () => {
-      try {
-        await bot.sendChatAction(chatId, 'typing');
-        setTimeout(async () => {
-          const msg = await bot.sendMessage(chatId, text, options);
-          resolve(msg);
-        }, 800);
-      } catch (err) {
-        console.error("Msg Error:", err);
-        resolve(null);
-      }
-    }, delay);
-  });
-};
 
 const webButton = {
   reply_markup: {
@@ -59,7 +18,7 @@ const webButton = {
   }
 };
 
-// AI Objection Handler Prompt
+// AI Response Logic
 async function handleAIResponse(userMessage, clientName = "Sir") {
   const systemInstruction = `
     You are Priya, the elite, highly professional female assistant of RealMeet Service. 
@@ -86,9 +45,18 @@ async function handleAIResponse(userMessage, clientName = "Sir") {
   }
 }
 
-bot.on('message', async (msg) => {
-  if (!msg.text) return;
+// Main Vercel Handler Function
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(200).send('RealMeet AI Engine Active on Vercel');
+  }
 
+  const { body } = req;
+  if (!body || !body.message || !body.message.text) {
+    return res.sendStatus(200);
+  }
+
+  const msg = body.message;
   const chatId = msg.chat.id;
   const userText = msg.text.trim();
   const textLower = userText.toLowerCase();
@@ -96,9 +64,9 @@ bot.on('message', async (msg) => {
   // Fresh Start Protocol
   if (textLower === '/start') {
     userSessions[chatId] = { step: 'ASK_CITY' };
-    await sendDelayedMessage(chatId, "Welcome to RealMeet Premium Service Support.", {}, 200);
-    await sendDelayedMessage(chatId, "Sir, please enter your current City or Area to check real-time availability.", {}, 1000);
-    return;
+    await bot.sendMessage(chatId, "Welcome to RealMeet Premium Service Support.");
+    await bot.sendMessage(chatId, "Sir, please enter your current City or Area to check real-time availability.");
+    return res.sendStatus(200);
   }
 
   if (!userSessions[chatId]) {
@@ -112,9 +80,9 @@ bot.on('message', async (msg) => {
   
   if (aiTriggers.some(trigger => textLower.includes(trigger)) || session.step === 'CONVERSION') {
     const aiReply = await handleAIResponse(userText, session.name || "Sir");
-    await sendDelayedMessage(chatId, aiReply, {}, 200);
-    await sendDelayedMessage(chatId, "Click below to clear all procedures on the website:", webButton, 1000);
-    return;
+    await bot.sendMessage(chatId, aiReply);
+    await bot.sendMessage(chatId, "Click below to clear all procedures on the website:", webButton);
+    return res.sendStatus(200);
   }
 
   // ==================== STRICT FUNNEL FLOW ====================
@@ -123,26 +91,25 @@ bot.on('message', async (msg) => {
   if (session.step === 'ASK_CITY') {
     session.location = userText;
     session.step = 'ASK_VENUE';
-    await sendDelayedMessage(chatId, `Checking database for "${userText}"...`, {}, 200);
-    await sendDelayedMessage(chatId, "Yes Sir, our verified female staff and models are 100% available in your area.", {}, 1200);
-    await sendDelayedMessage(chatId, "Do you require this service at your Home or a Hotel?", {}, 1000);
-    return;
+    await bot.sendMessage(chatId, `Checking database for "${userText}"...`);
+    await bot.sendMessage(chatId, "Yes Sir, our verified female staff and models are 100% available in your area.\n\nDo you require this service at your Home or a Hotel?");
+    return res.sendStatus(200);
   }
 
   // STAGE 2: Venue Selection
   if (session.step === 'ASK_VENUE') {
     session.venue = userText;
     session.step = 'ASK_PREFERENCE';
-    await sendDelayedMessage(chatId, "Understood Sir. Please specify your age preference or any specific requirements regarding the profile.", {}, 500);
-    return;
+    await bot.sendMessage(chatId, "Understood Sir. Please specify your age preference or any specific requirements regarding the profile.");
+    return res.sendStatus(200);
   }
 
   // STAGE 3: Preference & Name Request
   if (session.step === 'ASK_PREFERENCE') {
     session.preference = userText;
     session.step = 'VERIFY_NAME';
-    await sendDelayedMessage(chatId, "Noted. To securely lock your current location log, may I please know your official name?", {}, 500);
-    return;
+    await bot.sendMessage(chatId, "Noted. To securely lock your current location log, may I please know your official name?");
+    return res.sendStatus(200);
   }
 
   // STAGE 4: Name Submission & Final Pitch
@@ -150,9 +117,10 @@ bot.on('message', async (msg) => {
     session.name = userText;
     session.step = 'CONVERSION';
 
-    await sendDelayedMessage(chatId, `Thank you, Mr. ${userText}. Your session setup is successful.`, {}, 500);
-    await sendDelayedMessage(chatId, "To complete live photo selection and route your call to Khushi Mam, please book a call slot.", {}, 1200);
-    await sendDelayedMessage(chatId, "Open the link below, watch the short verification, and secure your slot. The booking fee is completely refundable.", webButton, 1200);
-    return;
+    await bot.sendMessage(chatId, `Thank you, Mr. ${userText}. Your session setup is successful.`);
+    await bot.sendMessage(chatId, "To complete live photo selection and route your call to Khushi Mam, please book a call slot.\n\nOpen the link below, watch the short verification, and secure your slot. The booking fee is completely refundable.", webButton);
+    return res.sendStatus(200);
   }
-});
+
+  return res.sendStatus(200);
+};
