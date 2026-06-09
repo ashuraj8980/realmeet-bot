@@ -6,15 +6,29 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const token = process.env.BOT_TOKEN;
 const geminiApiKey = process.env.GEMINI_API_KEY;
 
-// Clean Polling Connection
-const bot = new TelegramBot(token, { polling: true });
+// Base configuration without auto-polling to clear webhook first
+const bot = new TelegramBot(token);
 const genAI = new GoogleGenerativeAI(geminiApiKey);
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.get('/', (req, res) => res.send('Priya Direct Engine Live!'));
-app.listen(port, () => console.log(`Server listening on port ${port}`));
+app.listen(port, async () => {
+  console.log(`Server listening on port ${port}`);
+  
+  try {
+    // 100% Forcefully delete any old webhook configurations on Telegram side
+    await bot.deleteWebHook({ drop_pending_updates: true });
+    console.log("Old webhooks dropped successfully.");
+    
+    // Now safely start fresh polling
+    await bot.startPolling();
+    console.log("Priya Core Engine Fully Operational with Clean Polling...");
+  } catch (err) {
+    console.error("Initialization Error:", err);
+  }
+});
 
 const PRIYA_CHATBOT_SYSTEM_PROMPT = `
 Aapka naam Priya hai. Aap Real Meet service ki ek bohot hi pyaari, hot aur charming personal assistant hain. Aapko user se bilkul ek real human girl ki tarah baat karni hai. Chat style ekdam natural, thodi flirty aur engaging honi chahiye.
@@ -51,11 +65,10 @@ bot.on('message', async (msg) => {
     return bot.sendMessage(chatId, humanReplies[Math.floor(Math.random() * humanReplies.length)]);
   }
 
-  // STAGE 2: Core Chat via Gemini AI (Standard Content Generation Engine)
+  // STAGE 2: Core Chat via Gemini AI
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
-    // Prompt structure to feed rules directly to content generation
     const contents = [
       {
         role: 'user',
@@ -86,5 +99,3 @@ bot.on('message', async (msg) => {
     bot.sendMessage(chatId, "Suno na jaan, thoda network issue h, aap 2 min me message karo na please babu! ❤️");
   }
 });
-
-console.log("Priya Core Engine Fully Operational...");
