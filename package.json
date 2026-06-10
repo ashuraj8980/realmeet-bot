@@ -1,11 +1,7 @@
 {
   "name": "priya-bot",
   "version": "1.0.0",
-  "description": "Priya AI Telegram Bot",
   "main": "api/index.js",
-  "scripts": {
-    "start": "node api/index.js"
-  },
   "dependencies": {
     "node-telegram-bot-api": "^0.64.0",
     "@google/generative-ai": "^0.21.0"
