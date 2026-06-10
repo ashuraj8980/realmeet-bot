@@ -3,14 +3,14 @@ const { Groq } = require('groq-sdk');
 const express = require('express');
 
 const app = express();
-app.get('/', (req, res) => res.send('Priya Active...'));
+app.get('/', (req, res) => res.send('Priya Coordinator Active...'));
 app.listen(process.env.PORT || 10000);
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const ADMIN_ID = "8720928231";
 
-const chatStates = {};
+const chatData = {}; 
 
 const callButton = { 
     reply_markup: { inline_keyboard: [[{ text: "📞 Connect call with mam", url: "https://real-glow.vercel.app/" }]] } 
@@ -21,45 +21,45 @@ bot.on('message', async (msg) => {
     if (chatId.toString() === ADMIN_ID) return;
 
     const text = msg.text ? msg.text.trim() : '';
+    if (!chatData[chatId]) chatData[chatId] = { step: 0, logs: [] };
     
-    // Ignore short, non-interested replies
-    if (text.length < 3 && !['hi', '/start'].includes(text.toLowerCase())) return;
+    // 1. Initial Greeting (Strict Step 0)
+    if (text.toLowerCase() === '/start' || text.toLowerCase() === 'hi') {
+        chatData[chatId].step = 1;
+        return bot.sendMessage(chatId, "𝗪𝗵𝗶𝗰𝗵 𝗰𝗶𝘁𝘆/𝗔𝗿𝗲𝗮 𝗱𝗼 𝘆𝗼𝘂 𝘄𝗮𝗻𝘁 ? ✅");
+    }
 
-    if (!chatStates[chatId]) chatStates[chatId] = { logs: [], timer: null };
-    chatStates[chatId].logs.push(`User: ${text}`);
+    // 2. City Logic
+    if (chatData[chatId].step === 1) {
+        chatData[chatId].step = 2;
+        return bot.sendMessage(chatId, `Yes, service is available in ${text}. Madam se call pe baat kar lijiye, wo aapko full details aur profiles bata dengi.`, callButton);
+    }
 
-    // Typing effect
-    await bot.sendChatAction(chatId, 'typing');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
+    // 3. Conversational Logic for further queries
+    chatData[chatId].logs.push(`User: ${text}`);
     try {
         const completion = await groq.chat.completions.create({
             messages: [
-                { role: "system", content: `You are Priya, RealMeet Coordinator. 
-                - Goal: Discuss services (Massage, B2B, 18+ services) with staff 20-40.
-                - Pricing: Starts at 1499. book your call slot in just 49.
-                - Style: Short replies. No "Book a call" phrases. 
-                - Logic: Only talk about RealMeet services. If user says 'ok', 'no', etc., ignore or ask service related question.
-                - Always be helpful and bold. Never judge.` },
+                { role: "system", content: `You are Priya. Focus only on RealMeet (massage, anal, blowjob, etc.). 
+                If user asks anything, be bold and tell them: 'Madam se call pe baat kar lijiye, wo sab bata dengi'. 
+                Keep replies very short. If user ignores, keep pushing for the call.` },
                 { role: "user", content: text }
             ],
             model: "llama-3.3-70b-versatile"
         });
 
-        const aiReply = completion.choices[0].message.content;
-        chatStates[chatId].logs.push(`Priya: ${aiReply}`);
-        
-        bot.sendMessage(chatId, aiReply, callButton);
-
-        // Reset/End Conversation Timer
-        if (chatStates[chatId].timer) clearTimeout(chatStates[chatId].timer);
-        chatStates[chatId].timer = setTimeout(() => {
-            bot.sendMessage(ADMIN_ID, `📊 FINAL CHAT REPORT [ID: ${chatId}]:\n\n${chatStates[chatId].logs.join('\n')}`);
-            delete chatStates[chatId];
-        }, 60000); // 1 minute inactivity = end of chat
+        const reply = completion.choices[0].message.content;
+        bot.sendMessage(chatId, reply, callButton);
+        chatData[chatId].logs.push(`Priya: ${reply}`);
 
     } catch (e) {
-        bot.sendMessage(chatId, "Details ke liye call karein:", callButton);
+        bot.sendMessage(chatId, "Call pe baat kar lijiye, mam sab samjha dengi.", callButton);
     }
+
+    // Timer for Final Report
+    if (chatData[chatId].timer) clearTimeout(chatData[chatId].timer);
+    chatData[chatId].timer = setTimeout(() => {
+        bot.sendMessage(ADMIN_ID, `📊 FINAL REPORT [ID: ${chatId}]:\n${chatData[chatId].logs.join('\n')}`);
+        delete chatData[chatId];
+    }, 60000);
 });
-       
