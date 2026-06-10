@@ -1,16 +1,5 @@
-{
-  "name": "priya-bot",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
-  "dependencies": {
-    "node-telegram-bot-api": "^0.64.0",
-    "@google/generative-ai": "^0.21.0",
-    "express": "^4.19.2"
-  },
-  "engines": {
-    "node": "20.x"
-  }
+"dependencies": {
+  "node-telegram-bot-api": "^0.66.0",
+  "express": "^4.19.2",
+  "groq-sdk": "^0.5.0"
 }
