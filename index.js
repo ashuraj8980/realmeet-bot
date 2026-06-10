@@ -4,13 +4,14 @@ const express = require('express');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-app.get('/', (req, res) => res.send('Priya Funnel Bot Running...'));
+app.get('/', (req, res) => res.send('Priya Secure Anti-Timepass Engine Active...'));
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
 
+// Strict website redirection button
 const callButton = {
     reply_markup: {
         inline_keyboard: [[{ text: "📞 Visit Website to Connect Call", url: "https://real-glow.vercel.app/" }]]
@@ -29,7 +30,7 @@ const sendSmartReply = async (chatId, text, showButton = false, delay = 2000) =>
             await bot.sendMessage(chatId, text);
         }
     } catch (error) {
-        console.error("Error in messaging pipeline:", error);
+        console.error("Messaging error:", error);
     }
 };
 
@@ -47,53 +48,73 @@ bot.on('message', async (msg) => {
     const lowerText = text.toLowerCase();
 
     try {
-        if (lowerText === '/start' || session.stage === 'START') {
-            session.stage = 'AWAITING_CITY';
-            await sendSmartReply(chatId, "Kon si city ya area me chahiye sir? Batao 📍", false, 1500);
-            return;
+        // Clear reset commands
+        if (lowerText === '/start' || lowerText === 'hi' || lowerText === 'hey') {
+            if (session.stage === 'CONVERSATION') {
+                session.stage = 'CONVERSATION';
+            } else {
+                session.stage = 'AWAITING_CITY';
+                await sendSmartReply(chatId, "Kon si city ya area me chahiye sir? Batao 📍", false, 1500);
+                return;
+            }
         }
 
+        // Funnel Step 1: Capture City
         if (session.stage === 'AWAITING_CITY') {
             session.city = text;
+            session.stage = 'AWAITING_NAME';
+            await sendSmartReply(chatId, "Okay sir, aapka name kya hai?", false, 1500);
+            return;
+        }
+
+        // Funnel Step 2: Capture Name & Sanitize Inputs
+        if (session.stage === 'AWAITING_NAME') {
+            const blacklist = ['english', 'hindi', 'ok', 'yes', 'no', 'kya', 'what', 'who', '?', '??'];
+            if (blacklist.some(word => lowerText.includes(word)) || text.length > 15) {
+                session.name = 'Sir';
+            } else {
+                session.name = text;
+            }
             session.stage = 'CONVERSATION';
-            await sendSmartReply(chatId, "Okay, aapka name kya hai sir?", false, 1500);
+            await sendSmartReply(chatId, `Welcome ${session.name}! Hamare paas Model Girls, Desi, Russian, Tamil aur Bhabhi sab milti hain. Full body massage, B2B satisfaction aur Anal extra services hot call pe final ho jayengi. 
+
+Aap batao sir aapko kis tarah ki female pasand hai?`, false, 2500);
             return;
         }
 
-        if (session.stage === 'CONVERSATION' && !session.name) {
-            session.name = text;
-            await sendSmartReply(chatId, `Welcome ${text} sir! Models, Desi, Russian, Bhabhi sab available hain. Full body massage aur B2B service mil jayegi. Aapko kis tarah ki profile chahiye?`, true, 2000);
-            return;
+        // Funnel Step 3: AI Seductive + Anti-Timepass Filter Engine
+        if (session.stage === 'CONVERSATION') {
+            const systemPrompt = `
+            You are Priya, a highly professional yet extremely seductive female chat coordinator for RealMeet service.
+            User Name: "${session.name || 'Sir'}" | User Location: "${session.city || 'India'}".
+
+            STRICT ANTI-TIMEPASS AND CLOSE-CHAT DIRECTIVES:
+            1. If the user asks ANY question that is NOT related to RealMeet, booking, profiles, rates, or adult services (e.g., asking "what are you doing?", "where do you live?", chatting randomly, playing games, or asking out-of-context questions), you MUST politely and professionally close the conversation immediately.
+            2. Professional Close Response Format (Strictly use this tone):
+               "Sir, hum yahan sirf booking aur assistance ke liye available hain. Baaki sabhi details aur personal coordination ke liye aap niche diye gaye link se official website visit karke call connect kar lijiye, wahan aapko saari details mil jayengi."
+            3. For genuine queries (profiles, sex, b2b, anal, price, booking): Keep answers extremely short (Max 1 clear sentence). Be seductive and accept playfully, then push them to pay ₹49 on the website.
+            4. BOOKING SCRIPT: Always remind them: "Website pe jao, 'Book via Call/WhatsApp' par click karke 49rs pay karo, aur direct mam ka personal number lekar baat set karo."
+
+            User message: "${text}"
+            Response:`;
+
+            const result = await model.generateContent(systemPrompt);
+            let aiReply = result.response.text().trim();
+
+            // Keywords to force the website button visibility
+            const triggerKeywords = ['slot', 'book', 'pay', 'website', 'link', 'video', 'price', 'rate', 'money', 'payment', 'number', 'call', 'how', 'whatsapp', 'photo', 'girl', 'sex', 'service', 'b2b', 'satisfaction'];
+            
+            // If it's a timepass question or contains triggers, always append button
+            const isTimepassReply = aiReply.includes('visit karke call connect');
+            const needsButton = triggerKeywords.some(k => lowerText.includes(k)) || isTimepassReply || aiReply.toLowerCase().includes('website');
+
+            await sendSmartReply(chatId, aiReply, needsButton, 2000);
         }
-
-        // Main AI Logic
-        const systemPrompt = `
-        You are Priya, a highly professional yet seductive female chat coordinator for RealMeet service.
-        User Name: "${session.name || 'Sir'}" | Location: "${session.city || 'India'}".
-
-        Strict Directives:
-        1. Keep replies extremely short (Max 1 short sentence). Never repeat or dump paragraphs.
-        2. Answer ONLY what the user asks. If they ask for profiles, tell available types (Desi, Russian, Tamil, Bhabhi). If they ask for 18+ services (B2B, Anal, Sex), confirm with confidence.
-        3. EXPLAIN BOOKING PROCESS EXACTLY LIKE THIS IF ASKED:
-           "Website pe jao, wahan 'Book via Call' ya 'Book via WhatsApp' milega. Uspe click karke bas 49rs pay karo, pay karte hi turant mam ka direct number mil jayega jahan aap call ya whatsapp kar sakte ho."
-        4. Match the user's language smoothly. If they use English, answer in short hot English. If Hindi, use Hinglish.
-
-        User text: "${text}"
-        Response:`;
-
-        const result = await model.generateContent(systemPrompt);
-        let aiReply = result.response.text().trim();
-
-        const triggerKeywords = ['slot', 'book', 'pay', 'website', 'link', 'video', 'price', 'rate', 'money', 'payment', 'number', 'call', 'how', 'whatsapp', 'photo', 'girl', 'sex', 'service', 'b2b'];
-        const needsButton = triggerKeywords.some(k => lowerText.includes(k));
-
-        await sendSmartReply(chatId, aiReply, needsButton, 2000);
 
     } catch (error) {
-        console.error("AI Error:", error);
-        // Clean fallback response
-        await sendSmartReply(chatId, "Sir direct website pe jao, wahan Book via Call pe click karke 49rs pay karo aur mam ka number lekar baat karo.", true, 1500);
+        console.error("Pipeline Exception Captured:", error);
+        await sendSmartReply(chatId, "Sir, please website visit karke 'Book via Call' pe click karein aur 49rs pay karke mam se direct details le lijiye.", true, 1500);
     }
 });
 
-console.log("Priya Engine V3 is live...");
+console.log("Priya Anti-Timepass Funnel V5 is online...");
