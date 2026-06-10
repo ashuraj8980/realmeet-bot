@@ -1,33 +1,39 @@
 const TelegramBot = require('node-telegram-bot-api');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const express = require('express');
 
-// Polling mode active for Render hosting
+// Render Port Fix Engine
+const app = express();
+const PORT = process.env.PORT || 10000;
+app.get('/', (req, res) => res.send('Priya Bot Server Running Smoothly...'));
+app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+
+// Bot Core Configuration
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-// Official Website Booking Button Link
-const webButton = {
+// Sexy & Seductive Dynamic Button Markup
+const sexyButton = {
     reply_markup: {
-        inline_keyboard: [[{ text: "🌐 Open Official Website & Watch Video", url: "https://real-glow.vercel.app/" }]]
+        inline_keyboard: [[{ text: "💋 View Models Live Video & Book Slot", url: "https://real-glow.vercel.app/" }]]
     }
 };
 
-// Users session database tracker
 const userSessions = {};
 
-// Helper function: Real typing delays and short responses handler
-const sendSmartReply = async (chatId, text, showButton = false, delay = 3000) => {
+// Helper function for ultra-real typing effect and short responses
+const sendSmartReply = async (chatId, text, showButton = false, delay = 2500) => {
     try {
         await bot.sendChatAction(chatId, 'typing');
         await new Promise(resolve => setTimeout(resolve, delay));
         if (showButton) {
-            await bot.sendMessage(chatId, text, webButton);
+            await bot.sendMessage(chatId, text, sexyButton);
         } else {
             await bot.sendMessage(chatId, text);
         }
     } catch (error) {
-        console.error("Error in reply pipeline:", error);
+        console.error("Error in messaging pipeline:", error);
     }
 };
 
@@ -45,77 +51,71 @@ bot.on('message', async (msg) => {
     const lowerText = text.toLowerCase();
 
     try {
-        // Identity Manipulation Check (Tum kaun ho?)
+        // Identity checks
         if (lowerText.includes('kaun ho') || lowerText.includes('who are you') || lowerText.includes('tum kon')) {
-            const identityMsg = "Main bas customer ka call slot book karwati hoon aur direct call pe baat karwati hoon mam se. Agar aap ₹49 ka slot booking complete karte hain website pe jaake toh direct number aur details mil jayega.";
-            await sendSmartReply(chatId, identityMsg, true, 3000);
+            const identityMsg = "Main Priya hoon, call coordinator. Direct meeting aur live baat karwati hoon. Website pe jaake slot book kar lo, direct number mil jayega.";
+            await sendSmartReply(chatId, identityMsg, true, 2000);
             return;
         }
 
-        // --- STAGE WISE FUNNEL LOGIC ---
+        // --- DYNAMIC FUNNEL FLOW ---
 
-        // Stage 1: Initial Hook (No Button here, clean layout)
         if (session.stage === 'START') {
             session.stage = 'AWAITING_CITY';
-            const firstMsg = "Which city/Area do you want? ✅";
-            await sendSmartReply(chatId, firstMsg, false, 2000);
+            await sendSmartReply(chatId, "Which city or area do you want honey? Tell me clear. 📍", false, 1500);
             return;
         }
 
-        // Stage 2: Capture City -> Ask Name (Clean text layout)
         if (session.stage === 'AWAITING_CITY') {
             session.city = text;
             session.stage = 'AWAITING_NAME';
-            const nameMsg = "Sir kya mai aapka name jaan sakti hu chat aage process karne ke liye? 😊";
-            await sendSmartReply(chatId, nameMsg, false, 2500);
+            await sendSmartReply(chatId, "Sir kya mai aapka short name jaan sakti hu chat aage process karne ke liye? 😊", false, 2000);
             return;
         }
 
-        // Stage 3: Capture Name -> Hard Pitch Variety & Adult Services (Clean text layout)
         if (session.stage === 'AWAITING_NAME') {
-            session.name = text;
+            // Fix: Clean out garbage or literal word repetitions like "English"
+            session.name = (lowerText === 'english' || text.length > 15) ? 'Sir' : text;
             session.stage = 'CONVERSATION';
-            const pitchMsg = `Thank you ${text} sir! Ham pure India me home and hotel private meeting service provide karte hai. 
+            
+            const pitchMsg = `Ok ${session.name} sir. Hamare paas Desi Girls, high profile Models, Russian, Tamil aur Desi Bhabhi sab available hain. Full Body Massage, B2B satisfaction, Anal aur har tarah ki 18+ extra services milti hain home & hotel dono jagah. 
 
-Hamare paas Model Girls, Desi Girls, Russian, Nigerian, Tamil Girls aur Desi Bhabhi har tarah ki profiles available hai. Services me Full Body Massage, B2B, Anal aur extra 18+ services including rehti hai hamesha. 🔥
-
-Aap kis tarah ki female staff se service chahte hain sir?`;
-            await sendSmartReply(chatId, pitchMsg, false, 3500);
+Aapko kis tarah ki profile pasand hai?`;
+            await sendSmartReply(chatId, pitchMsg, false, 3000);
             return;
         }
 
-        // Stage 4: Open Dynamic Conversation with Anti-Scam Angle via Gemini
+        // Stage 4: Open Seductive & Extremely Short Intelligent Conversation
         if (session.stage === 'CONVERSATION') {
             const systemPrompt = `
-            You are Priya, a smart female chat coordinator for RealMeet service. 
-            The user's name is "${session.name}" and location is "${session.city}".
+            You are Priya, an extremely seductive, high-class female chat coordinator for RealMeet service.
+            Current User Name: "${session.name}" | User Location: "${session.city}".
             
-            Strict Operational Rules:
-            1. Keep replies extremely short, human, 1-2 sentences maximum. No robotic talk.
-            2. Language rule: Detect user's tone. If they speak English, reply in short fluent English. If Hindi/Hinglish, reply accordingly. Never deny language choices.
-            3. Pricing & Booking Script: If user asks about price, booking, process, photos, or how to trust:
-               - "Starting price 1500 for 1 hr hai. Price profile pe depend karta hai kyunki alag girl model ki alag rate hoti hai."
-               - "Market me fake aur scam bohot hota hai advance ke naam par, isliye hamari official mam ne website par ek live video upload ki hai. Aap pehle website par jaakar video dekh lijiye, sab clear ho jayega."
-               - "Video dekhne ke baad wahan 49rs pay karke apna call slot confirm kar lijiye, same time pe mam se direct baat ho jayegi aur sab final ho jayega."
-            4. 18+ / Non-veg contexts (Sex, anal, b2b, extra service, configurations): Respond positively, raw and playfully: "Haan sir hamare paas b2b, anal, aur full body satisfaction sab hota hai call pe mam sab live dikha dengi, aap bas website pe jaake mam ka video dekho aur slot book karo."
+            Strict Behavioral Directives:
+            1. REPLIES MUST BE ULTRA-SHORT (Max 1 short sentence/line). Never dump raw paragraphs or repeat your speech.
+            2. LANGUAGE DYNAMICS: Instantly match user language tone. If user types in English, reply in hot, seductive, professional English. If Hinglish/Hindi, reply in premium local Hinglish. Never say "I only talk Hinglish".
+            3. SEXY/18+ TALK & SERVICES: If user talks dirty, asks about adult details (sex, b2b, anal, body satisfaction, blowjob, pussy, etc.), accept it with a playful, seductive confirmation. Example: "Haan sir, b2b, hardcore satisfaction sab kuch mil jayega, live call pe mam sab final kar dengi."
+            4. ANTI-SCAM SLOT SPEECH: If user asks for pricing, process, number, or how to trust:
+               - "Starting 1500/hr hai, baki rate girl profile pe depend karta hai."
+               - "Market me fake log scam karte hain advance lekar, isliye hamari mam ne website par live video proof dala hai. Pehle website jaake video dekho."
+               - "Wahan se safety ke liye bas 49rs ka slot booking confirm karo, direct number aur photo mil jayega usi time."
             
-            User says: "${text}"
+            User's message: "${text}"
             Response:`;
 
             const result = await model.generateContent(systemPrompt);
             let aiReply = result.response.text().trim();
 
-            // Smartly push button only when slot, booking, website, video, or money is involved
-            const triggerKeywords = ['slot', 'book', 'pay', 'website', 'link', 'video', 'scam', 'fake', 'price', 'kitna', 'rate', 'money', 'payment', 'number', 'call', 'how'];
-            const showButtonOnContext = triggerKeywords.some(keyword => lowerText.includes(keyword)) || aiReply.toLowerCase().includes('website') || aiReply.toLowerCase().includes('slot');
+            // Smart trigger buttons context filter
+            const needsButton = ['slot', 'book', 'pay', 'website', 'link', 'video', 'scam', 'price', 'rate', 'money', 'payment', 'number', 'call', 'how', 'show', 'pic', 'photo', 'girl', 'russian', 'sex', 'satisfaction'].some(k => lowerText.includes(k));
 
-            await sendSmartReply(chatId, aiReply, showButtonOnContext, 3500);
+            await sendSmartReply(chatId, aiReply, needsButton, 2500);
         }
 
     } catch (error) {
-        console.error("Error processing message pipeline:", error);
-        await sendSmartReply(chatId, "Ji sir, thoda network issue hai line pe. Aap tab tak website pe jaake mam ka video dekh lijiye aur slot confirm kar lijiye.", true, 2000);
+        console.error("Error processing pipeline:", error);
+        await sendSmartReply(chatId, "Ji thoda network problem hai. Aap direct website pe jaake mam ka video proof dekh kar slot confirm kar lijiye.", true, 2000);
     }
 });
 
-console.log("RealMeet Ultra-Smart Sales Funnel is live...");
+console.log("Priya Seductive Anti-Scam Bot Engine is Active...");
