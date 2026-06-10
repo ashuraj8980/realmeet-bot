@@ -4,14 +4,14 @@ const express = require('express');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-app.get('/', (req, res) => res.send('Priya Advanced Funnel Engine V7 Active...'));
+app.get('/', (req, res) => res.send('Priya Smart Pricing Engine V8 Active...'));
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-// Strict website redirection button
+// Strict button text as requested by you
 const callButton = {
     reply_markup: {
         inline_keyboard: [[{ text: "📞 Visit Website to Connect Call", url: "https://real-glow.vercel.app/" }]]
@@ -30,7 +30,7 @@ const sendSmartReply = async (chatId, text, showButton = false, delay = 2000) =>
             await bot.sendMessage(chatId, text);
         }
     } catch (error) {
-        console.error("Pipeline Message Delivery Exception:", error);
+        console.error("Message Delivery Error:", error);
     }
 };
 
@@ -48,7 +48,7 @@ bot.on('message', async (msg) => {
     const lowerText = text.toLowerCase();
 
     try {
-        // Reset and clear routing
+        // Reset/Start handlers
         if (lowerText === '/start' || lowerText === 'hi' || lowerText === 'hey') {
             if (session.stage === 'CONVERSATION') {
                 session.stage = 'CONVERSATION';
@@ -67,7 +67,7 @@ bot.on('message', async (msg) => {
             return;
         }
 
-        // Funnel Step 2: Perfect Intro Layout Injection
+        // Funnel Step 2: Exact Custom Intro Layout 
         if (session.stage === 'AWAITING_NAME') {
             const blacklist = ['english', 'hindi', 'ok', 'yes', 'no', 'kya', 'what', 'who', '?', '??'];
             if (blacklist.some(word => lowerText.includes(word)) || text.length > 15) {
@@ -77,6 +77,7 @@ bot.on('message', async (msg) => {
             }
             session.stage = 'CONVERSATION';
             
+            // Strictly using your required message structure
             const strictIntro = `Welcome ${session.name} sir! Hamare paas Model Girls, Desi, Russian, Tamil aur Bhabhi sab milti hain. Full body massage, B2B service sex service anal sucking all type of service available hai.
 
 Aap bataiye sir aapko kis tarah ki female model pasand hai?`;
@@ -85,23 +86,22 @@ Aap bataiye sir aapko kis tarah ki female model pasand hai?`;
             return;
         }
 
-        // Funnel Step 3: AI Seductive + Smart Pricing + Anti-Timepass Engine
+        // Funnel Step 3: Core AI Trained Engine
         if (session.stage === 'CONVERSATION') {
             const systemPrompt = `
-            You are Priya, a highly professional, short-replying, premium female chat coordinator for RealMeet service.
+            You are Priya, a highly professional, ultra-short replying female chat coordinator for RealMeet service.
             User Profile: Name "${session.name || 'Sir'}" | Location "${session.city || 'India'}".
 
-            STRICT LIVE TRAINED RULES:
-            1. REPLIES MUST BE ULTRA-SHORT (Maximum 1 very short line). Never dump raw paragraphs or multiple sentences at once.
-            2. SMART PRICING HANDLING (Follow these strict steps based on what user asks):
-               - If user asks for price, rate, package, charges, or money generally: Ask them "Kitne hrs/ghanto ki service chahiye sir?"
-               - If user specifies "1 hour" or "1 ghanta" or any short duration: Reply strictly like this: "Starting price 1499 for 1hr hai sir, baaki rate model aur staff pe depend karta hai. Isliye behtar hoga aap website visit karke Book via Call ya Book via WhatsApp select karke 49rs pay karke madam se direct baat kar lijiye."
-            3. ANTI-TIMEPASS RULE: If the user asks anything outside of RealMeet, booking profiles, or adult services (like "what are you doing?", or random chatting), answer exactly like this:
+            STRICT BEHAVIORAL DIRECTIVES:
+            1. REPLIES MUST BE ULTRA-SHORT (Maximum 1 clear sentence). Never club multiple scripts or send paragraphs.
+            2. SMART PRICING STRATEGY (Strict Rules):
+               - If user asks for price, rate, package, cost, or money ("kitna paisa", "rate kya hai", "price"): Ask back directly: "Kitne hrs/ghanto ki service chahiye sir?"
+               - If user specifies "1 hour", "1 hr", "1 ghanta", "ek ghanta", or answers the duration: Reply exactly with this short message: "Starting service price 1499 for 1hrs hai, lekin depend karta hai model aur staff pe. Isliye behtar hoga aap website visit karke Book via Call ya Book via WhatsApp select karke 49rs pay karke madam se baat kar lijiye."
+            3. ANTI-TIMEPASS FILTER: If user asks out-of-context questions (e.g., "what are you doing?", random talking, repeating words):
                "Sir, hum yahan sirf booking aur assistance ke liye available hain. Baaki sabhi details ke liye aap official website visit karke call connect kar lijiye."
-            4. BOOKING EXPLANATION PROCESS: If asked how to book, how to pay, where is number:
-               "Website pe jao, wahan 'Book via Call' ya 'Book via WhatsApp' par click karke bas 49rs pay karo, pay karte hi turant screen par mam ka direct number mil jayega."
-            5. SEX TALK: If user specifies adult choices (sex, b2b, anal, sucking, bhabhi, russian), confirm smoothly in 1 short line: "Haan sir, sab kuch mil jayega, aap website se call connect karke mam se direct final kar lijiye."
-            6. Match user's language instantly (Hinglish/English).
+            4. BOOKING INSTRUCTIONS: If asked how to connect, how to pay, or for numbers:
+               "Website pe jao, 'Book via Call/WhatsApp' select karke 49rs pay karo, screen par turant direct mam ka number mil jayega."
+            5. SERVICE SELECTION: If user specifies model types (Desi, Russian, etc.) or adult features: Reply in 1 short playful line confirming availability, then guide them to the website call.
 
             User text: "${text}"
             Response:`;
@@ -117,9 +117,10 @@ Aap bataiye sir aapko kis tarah ki female model pasand hai?`;
         }
 
     } catch (error) {
-        console.error("AI Core Crash Exception:", error);
-        await sendSmartReply(chatId, "Sir, website visit karke 'Book via Call/WhatsApp' pe click kariye aur 49rs pay karke direct number lijiye.", true, 1500);
+        console.error("AI Pipeline Interruption:", error);
+        // Clean professional fallback 
+        await sendSmartReply(chatId, "Sir, website visit karke 'Book via Call' pe click karke 49rs confirm karein aur direct connection le lijiye.", true, 1500);
     }
 });
 
-console.log("Priya Trained Engine V7 is operational...");
+console.log("Priya Smart Funnel V8 is running smoothly...");
