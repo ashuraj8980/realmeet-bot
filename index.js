@@ -1,17 +1,17 @@
 const TelegramBot = require('node-telegram-bot-api');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { Groq } = require('groq-sdk');
 const express = require('express');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-app.get('/', (req, res) => res.send('Priya Bulletproof Pricing Engine V10 Active...'));
+app.get('/', (req, res) => res.send('Priya Groq Engine V12 Active...'));
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
-const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-// Strict website redirection button
+// Initializing Groq Client with your provided Free API Key
+const groq = new Groq({ apiKey: "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" });
+
 const callButton = {
     reply_markup: {
         inline_keyboard: [[{ text: "📞 Visit Website to Connect Call", url: "https://real-glow.vercel.app/" }]]
@@ -20,7 +20,7 @@ const callButton = {
 
 const userSessions = {};
 
-const sendSmartReply = async (chatId, text, showButton = false, delay = 1800) => {
+const sendSmartReply = async (chatId, text, showButton = false, delay = 1500) => {
     try {
         await bot.sendChatAction(chatId, 'typing');
         await new Promise(resolve => setTimeout(resolve, delay));
@@ -30,7 +30,7 @@ const sendSmartReply = async (chatId, text, showButton = false, delay = 1800) =>
             await bot.sendMessage(chatId, text);
         }
     } catch (error) {
-        console.error("Pipeline Delivery Exception:", error);
+        console.error("Message delivery exception:", error);
     }
 };
 
@@ -48,15 +48,12 @@ bot.on('message', async (msg) => {
     const lowerText = text.toLowerCase();
 
     try {
-        // Handle Global Resets
+        // Global Reset Triggers
         if (lowerText === '/start' || lowerText === 'hi' || lowerText === 'hey') {
-            if (session.stage === 'CONVERSATION') {
-                session.stage = 'CONVERSATION';
-            } else {
-                session.stage = 'AWAITING_CITY';
-                await sendSmartReply(chatId, "Kon si city ya area me chahiye sir? Batao 📍", false, 1200);
-                return;
-            }
+            session.stage = 'AWAITING_CITY';
+            session.askedPrice = false;
+            await sendSmartReply(chatId, "Kon si city ya area me chahiye sir? Batao 📍", false, 1200);
+            return;
         }
 
         // Funnel Step 1: Capture City
@@ -67,7 +64,7 @@ bot.on('message', async (msg) => {
             return;
         }
 
-        // Funnel Step 2: Perfect Intro Layout Injection
+        // Funnel Step 2: Custom Layout Welcome Message Injection
         if (session.stage === 'AWAITING_NAME') {
             const blacklist = ['english', 'hindi', 'ok', 'yes', 'no', 'kya', 'what', 'who', '?', '??'];
             if (blacklist.some(word => lowerText.includes(word)) || text.length > 15) {
@@ -81,11 +78,11 @@ bot.on('message', async (msg) => {
 
 Aap bataiye sir aapko kis tarah ki female model pasand hai?`;
             
-            await sendSmartReply(chatId, strictIntro, false, 1800);
+            await sendSmartReply(chatId, strictIntro, false, 1500);
             return;
         }
 
-        // Funnel Step 3: Code-Level Pricing Filters (100% bypasses AI and runs even during limits)
+        // Funnel Step 3: Hardcoded Code-Level Pricing Filters (Bypasses all API dependencies)
         const priceKeywords = ['price', 'rate', 'package', 'charges', 'money', 'kitna', 'cost', 'paisa', 'paise', 'rate kya', 'charge'];
         const durationKeywords = ['1', 'one', 'hr', 'hour', 'ghanta', 'ghante', 'ganta', 'gante', 'hours'];
 
@@ -96,44 +93,45 @@ Aap bataiye sir aapko kis tarah ki female model pasand hai?`;
             return;
         }
 
-        // Condition B: If they specified 1 hour/duration after or during pricing request
+        // Condition B: If user answers or specifies duration after pricing request
         if (durationKeywords.some(k => lowerText.includes(k))) {
-            const strictPriceMsg = "Starting service price 1499 for 1hrs hai, lekin depend karta hai model aur staff pe. Isliye behtar hoga aap website visit karke Book via Call ya Book via WhatsApp select karke 49rs pay karke madam se baat kar lijiye.";
-            await sendSmartReply(chatId, strictPriceMsg, true, 1800);
+            const strictPriceMsg = "Starting service price 1499 for 1hrs hai, lekin depend karta hai model aur staff pe. Isliye behtar hoga aap website visit karke Book via Call ya Book via WhatsApp select karke 49rs pay karke madam se baat kar ligiye.";
+            await sendSmartReply(chatId, strictPriceMsg, true, 1500);
             return;
         }
 
-        // Funnel Step 4: Fallback Protection for General Text/Choices ("Any other option?", "Desi", etc.)
+        // Funnel Step 4: Groq Free LLaMA 3 Engine Integration
         if (session.stage === 'CONVERSATION') {
-            try {
-                const systemPrompt = `
-                You are Priya, a premium female chat coordinator for RealMeet service.
-                User: "${session.name || 'Sir'}" in "${session.city || 'India'}".
+            const chatCompletion = await groq.chat.completions.create({
+                messages: [
+                    {
+                        role: "system",
+                        content: `You are Priya, a premium female chat coordinator for RealMeet service. User name is "${session.name}" from "${session.city}". 
+                        RULES:
+                        1. Reply must be strictly 1 very short line in Hinglish. No paragraphs.
+                        2. If user asks for models, service details or options, say it is available and guide them to visit the website to connect call.
+                        3. If user does timepass, say: "Sir, hum yahan sirf booking aur assistance ke liye available hain. Baaki sabhi details ke liye aap official website visit karke call connect kar lijiye."`
+                    },
+                    { role: "user", content: text }
+                ],
+                model: "llama3-8b-8192",
+                max_tokens: 50
+            });
 
-                RULES:
-                1. REPLIES MUST BE ULTRA-SHORT (Max 1 short line).
-                2. Direct user to the website to connect call by paying 49rs.
+            let aiReply = chatCompletion.choices[0].message.content.trim();
+            
+            const triggerKeywords = ['slot', 'book', 'pay', 'website', 'link', 'video', 'number', 'call', 'how', 'whatsapp', 'photo', 'girl', 'sex', 'service', 'b2b', 'desi', 'russian', 'bhabhi', 'option'];
+            const needsButton = triggerKeywords.some(k => lowerText.includes(k)) || aiReply.toLowerCase().includes('website') || aiReply.toLowerCase().includes('call');
 
-                User text: "${text}"
-                Response:`;
-
-                const result = await model.generateContent(systemPrompt);
-                let aiReply = result.response.text().trim();
-                
-                await sendSmartReply(chatId, aiReply, true, 1500);
-            } catch (aiError) {
-                // If Gemini Quota is completely blocked, this custom smart filter runs instantly without crashing
-                console.log("Gemini Overloaded, firing dynamic direct routing...");
-                const smartFallback = `Haan sir, aap jo dhund rahe ho sab mil jayega. Ek baar website pe jaakar Book via Call/WhatsApp select karke 49rs confirm kariye aur madam se direct baat kar lijiye.`;
-                await sendSmartReply(chatId, smartFallback, true, 1500);
-            }
+            await sendSmartReply(chatId, aiReply, needsButton, 1500);
         }
 
     } catch (error) {
-        console.error("Global Flow Crash Prevention:", error);
-        await sendSmartReply(chatId, "Sir, website visit karke 'Book via Call' pe click kariye aur 49rs pay karke direct number lijiye.", true, 1200);
+        console.error("Groq Engine Pipeline Exception:", error);
+        const smartFallback = `Haan sir, aap jo dhund rahe ho sab mil jayega. Ek baar website pe jaakar Book via Call/WhatsApp select karke 49rs confirm kariye aur madam se direct baat kar lijiye.`;
+        await sendSmartReply(chatId, smartFallback, true, 1200);
     }
 });
 
-console.log("Priya Bulletproof Engine V10 Active...");
-                                     
+console.log("Priya Free Groq Engine Operational...");
+                
