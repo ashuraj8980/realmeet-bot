@@ -11,7 +11,7 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const callButton = { 
     reply_markup: { 
-        inline_keyboard: [[{ text: "📞 Connect with Manager", url: "https://real-glow.vercel.app/" }]] 
+        inline_keyboard: [[{ text: "📞 Call for Booking", url: "https://real-glow.vercel.app/" }]] 
     } 
 };
 
@@ -19,27 +19,27 @@ bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text ? msg.text.trim() : '';
     
-    // 1. Initial Flow
     if (text.toLowerCase() === '/start' || text.toLowerCase() === 'hi') {
-        return bot.sendMessage(chatId, "Namaste! RealMeet Coordinator Priya here. Which city or area are you looking for services? ✅");
+        return bot.sendMessage(chatId, "Namaste! RealMeet Coordinator Priya here. Which city/area are you looking for services? ✅");
     }
 
     await bot.sendChatAction(chatId, 'typing');
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     try {
         const completion = await groq.chat.completions.create({
             messages: [
                 { 
                     role: "system", 
-                    content: `You are Priya, the professional Human-like coordinator for RealMeet.
-                    - YOUR IDENTITY: You represent RealMeet, providing premium services all over India.
+                    content: `You are Priya, a professional coordinator for RealMeet.
                     - SERVICES: Body massage, B2B, anal, licking, kissing, blowjob.
                     - STAFF: Diverse female staff aged 20-40 years.
-                    - WHY 49rs: Clarify that 49rs is a small token/registration charge for booking confirmation and management.
-                    - CALL PROCESS: Tell them to visit the website, book/register for 49rs, and the manager will connect them via call.
-                    - HUMAN BEHAVIOR: Don't give the link in every message. Explain services first. If user acts weird or wastes time, politely guide them to the manager for a call.
-                    - LANGUAGE: Respond in the user's language (Hindi/English). Keep it concise.` 
+                    - 49rs FEE: It's a small token fee for booking confirmation and management.
+                    - RULES: 
+                      1. Keep replies very short (under 12 words).
+                      2. Do NOT spam the booking link. Only send it if user asks for details/next steps/price.
+                      3. If user sounds bored/bored, ask: "Sab theek? Koi confusion hai?"
+                      4. Language: Same as user (Hindi/English).` 
                 },
                 { role: "user", content: text }
             ],
@@ -47,9 +47,16 @@ bot.on('message', async (msg) => {
         });
 
         const aiReply = completion.choices[0].message.content;
-        bot.sendMessage(chatId, aiReply, callButton);
+        
+        // Button trigger: Booking, price, ya query ke waqt hi link bhejna
+        if (text.toLowerCase().match(/book|price|query|interested|help/)) {
+            bot.sendMessage(chatId, aiReply, callButton);
+        } else {
+            bot.sendMessage(chatId, aiReply);
+        }
         
     } catch (e) {
-        bot.sendMessage(chatId, "Please connect with our manager via the button below for bookings.", callButton);
+        bot.sendMessage(chatId, "Booking ke liye yahan click karein:", callButton);
     }
 });
+                             
