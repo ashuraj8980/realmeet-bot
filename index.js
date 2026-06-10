@@ -4,7 +4,9 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 // Polling mode active for Render
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+// Fixed: Using the correct updated API model name for 2026 pipelines
+const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 // Free calling/slot booking button markup
 const webButton = {
@@ -82,7 +84,6 @@ bot.on('message', async (msg) => {
 
         // Stage 4: Open Conversation (Price, Models, Non-veg, Profiles)
         if (session.stage === 'CONVERSATION') {
-            // Gemini AI is used here to handle dynamic queries with structural rules
             const systemPrompt = `
             You are Priya, a smart female chat coordinator for RealMeet service. 
             The user's name is "${session.name}" and their location is "${session.city}".
@@ -110,5 +111,4 @@ bot.on('message', async (msg) => {
     }
 });
 
-console.log("RealMeet Smart Funnel Bot is running smoothly...");
-      
+console.log("RealMeet Smart Funnel Bot is running smoothly with updated Gemini pipeline...");
