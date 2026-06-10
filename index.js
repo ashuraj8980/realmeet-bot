@@ -95,7 +95,7 @@ Aap bataiye sir aapko kis tarah ki female model pasand hai?`;
 
         // Condition B: If user answers or specifies duration after pricing request
         if (durationKeywords.some(k => lowerText.includes(k))) {
-            const strictPriceMsg = "Starting service price 1499 for 1hrs hai, lekin depend karta hai model aur staff pe. Isliye behtar hoga aap website visit karke Book via Call ya Book via WhatsApp select karke 49rs pay karke madam se baat kar ligiye.";
+            const strictPriceMsg = "Starting service price 1499 for 1hrs hai, lekin depend karta hai model aur staff pe. Isliye behtar hoga aap website visit karke Book via Call ya Book via WhatsApp select karke 49rs pay karke madam se baat kar lijiye.";
             await sendSmartReply(chatId, strictPriceMsg, true, 1500);
             return;
         }
@@ -128,10 +128,9 @@ Aap bataiye sir aapko kis tarah ki female model pasand hai?`;
 
     } catch (error) {
         console.error("Groq Engine Pipeline Exception:", error);
-        const smartFallback = `Haan sir, aap jo dhund rahe ho sab mil jayega. Ek baar website pe jaakar Book via Call/WhatsApp select karke 49rs confirm kariye aur madam se direct baat kar lijiye.`;
+        const smartFallback = `Haan sir, aap jo dhund rahe ho sab mil jayega. Ek baar website pe jaakar Book via Call/WhatsApp select karke 49rs confirm mariye aur madam se direct baat kar lijiye.`;
         await sendSmartReply(chatId, smartFallback, true, 1200);
     }
 });
 
 console.log("Priya Free Groq Engine Operational...");
-                
