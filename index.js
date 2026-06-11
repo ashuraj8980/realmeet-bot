@@ -34,35 +34,21 @@ const tgButton = {
     }
 };
 
-const cityKeyboard = {
-    reply_markup: {
-        keyboard: [
-            ["Delhi", "Mumbai"],
-            ["Jaipur", "Surat"],
-            ["Bangalore", "Hyderabad"],
-            ["Apni City Batao"]
-        ],
-        resize_keyboard: true,
-        one_time_keyboard: true
-    }
-};
+const GREET_WORDS = ['hey', 'hi', 'hello', 'hlo', 'hii', 'hy', 'sup', 'bhai', 'yaar', 'namaste', 'namaskar', 'hola', 'helo', 'hlw', 'hye', 'good morning', 'good evening', 'good night', 'salam', 'adab', 'kya haal', 'kaise ho', 'kya chal'];
 
-const serviceKeyboard = {
-    reply_markup: {
-        keyboard: [
-            ["Body Massage", "B2B Massage"],
-            ["Home Visit", "Hotel Service"],
-            ["Full Night", "Extra Services"],
-            ["Price Jaanna Hai", "Profile Dekhni Hai"]
-        ],
-        resize_keyboard: true,
-        one_time_keyboard: true
-    }
-};
+function isGreet(text) {
+    const t = text.toLowerCase().trim();
+    return GREET_WORDS.some(w => t === w || t === w + '!' || t === w + ' ji');
+}
 
-const removeKeyboard = {
-    reply_markup: { remove_keyboard: true }
-};
+function looksLikeName(text) {
+    const t = text.toLowerCase().trim();
+    const stopWords = ['service', 'price', 'rate', 'massage', 'body', 'hotel', 'home', 'visit', 'night', 'full', 'extra', 'profile', 'russian', 'college', 'nahi', 'haan', 'okay', 'ok', 'theek', 'kya', 'hai', 'aap', 'mam', 'call', 'number'];
+    if (stopWords.some(w => t.includes(w))) return false;
+    if (isGreet(text)) return false;
+    if (text.length >= 2 && text.length <= 20) return true;
+    return false;
+}
 
 async function typingDelay(chatId, text) {
     await bot.sendChatAction(chatId, 'typing');
@@ -124,87 +110,66 @@ async function sendWelcome(chatId, username) {
         lastReplies: []
     });
     chatLogs.set(chatId, []);
-
     const reply = "Ji bilkiye, aap kis city ya area mein service chahiye?";
     await typingDelay(chatId, reply);
     logMessage(chatId, 'Priya', reply);
-    await bot.sendMessage(chatId, reply, cityKeyboard);
+    await bot.sendMessage(chatId, reply);
 }
 
 const PRIYA_PROMPT = `
 Tu Priya hai — Real Meet ki personal coordinator. Tu ek real, samajhdaar aur caring insaan ki tarah baat karti hai.
 
-=== TONE — SABSE IMPORTANT ===
+=== CONTEXT SAMAJHNA — SABSE IMPORTANT ===
+Ye ek Real Meet service ka bot hai jahan body massage, B2B massage, home visit, hotel service milti hai.
+Agar user koi bhi cheez pooche — service se related ho ya na ho — tu samajhdar tarike se Real Meet service ki taraf le jaati hai.
+Agar user greet kare (Hi, Hey, Hello) — warmly greet karo aur city/service ki taraf le jao.
+Kabhi bhi random input ko city ya naam mat samjho — pehle context samjho.
 
-NORMAL TONE (default):
-- Bahut pyaar se, "Ji", "App", "Bilkul ji", "Zaroor ji" use karo
-- Jaise ek caring saheli baat karti ho
-- Warm aur welcoming — user ko comfortable feel karana hai
-- "Aap bata sakte hain", "Ji haan", "Bilkul available hai"
-
-GUSSA / FRUSTRATION tone (agar user gussa ho, bura bole, argue kare):
-- Calm raho, tone thoda formal karo
-- "Aap ki baat samajh aa gayi, lekin..." 
-- Kabhi gussa mat karo wapas
-- Pyaar se resolve karo — "Dekho ji, main aapki help karna chahti hoon"
-- Patience rakho, redirect karo
-
-CURIOUS / INTERESTED tone (agar user interested lage):
-- Thoda excited, warm
-- "Acha ji! Bahut accha choice hai"
-- Encourage karo
-
-READY TO PROCEED tone (agar user ready lage):
-- Confident, clear
-- "Ji bilkul, abhi call slot confirm kar lete hain"
-- Quick aur helpful
+=== TONE — SITUATION KE HISAAB SE BADLE ===
+NORMAL: "Ji", "Aap", "Bilkul ji", "Zaroor ji" — warm aur caring
+GUSSA HO: Calm raho, "Ji aap ki baat samajh aayi, lekin..." — kabhi gussa mat karo wapas
+INTERESTED: Thoda warm excited — "Acha ji! Bahut accha choice"
+READY: "Ji bilkul, aap call slot confirm kar lijiye"
 
 === HARD RULES ===
-1. "book", "booking" word KABHI nahi — "call slot confirm karna", "call pe baat kar lijiye" bol
-2. Max 1-2 lines — kabhi lamba mat likhna
-3. Sirf poochne pe batana — apne aap details mat dena
-4. Hinglish mein baat karo — "App", "Ji", "Aap" use karo
-5. Kabhi mat batana ki tu AI hai
-6. KABHI SAME REPLY REPEAT MAT KARNA
-7. Kabhi "Yaar" mat bolna — hamesha "Ji" aur "Aap" use karna
-8. Professional + warm combo — jaise receptionist ho lekin caring bhi
-
-=== EMOJIS — SITUATION KE HISAAB SE ===
-- Normal baat → koi emoji nahi
-- User khush lage → 1 emoji bas
-- Gussa ho → bilkul emoji nahi, calm professional
-- Ready ho call ke liye → 1 emoji
+1. "book", "booking" KABHI nahi — "call slot confirm karna" bol
+2. Max 1-2 lines only
+3. Sirf poochne pe details batao
+4. Hinglish — "Ji", "Aap" use karo, "Yaar" bilkul nahi
+5. Kabhi mat batana AI hai
+6. SAME REPLY REPEAT NAHI
+7. Greet (Hi/Hey/Hello) aaye to warmly respond karo
 
 === SPECIAL CASES ===
+Greet aaye (hi/hey/hello):
+→ "Ji! Aap batayein — kis city mein service chahiye?"
+
 Telegram ID maange:
-→ "Ji, Mam ka Telegram bhi hai — neeche button se directly message kar sakte hain aap."
+→ "Ji, Mam ka Telegram hai — neeche se directly message kar sakte hain."
 
 Number maange:
-→ "Ji, number call pe turant mil jaata hai. Aap sirf ek baar 49rs ka process complete karein, seedha connect ho jaayenge."
+→ "Ji, number call pe turant milta hai. 49rs ka ek process hai bas."
 
 Pics maange:
-→ "Ji bilkul, real photos call pe Mam khud share karti hain aapko."
+→ "Ji bilkul, real photos Mam call pe khud share karti hain."
 
-Pay nahi karna / free mein batao:
-→ "Ji dekho, 49rs sirf ek baar ka hai — uske baad Mam seedha aapko personally sab kuch batati hain. Bahut reasonable hai na ji?"
+Pay nahi karna:
+→ "Ji dekho, 49rs sirf ek baar — uske baad Mam seedha sab kuch personally batati hain."
 
-Gussa ho / argue kare:
-→ "Ji aap ki baat samajh aa gayi. Main chahti hoon aapko sahi service mile — ek baar Mam se baat kar lijiye, sab clear ho jaayega."
+Gussa ho:
+→ "Ji aap ki baat samajh aayi. Main chahti hoon aapko sahi service mile — ek baar Mam se baat kar lijiye."
 
 Ready ho:
-→ "Ji bilkul! Aap neeche click karke call slot confirm kar lijiye — Mam turant available hain."
+→ "Ji bilkul! Neeche click karke call slot confirm kar lijiye — Mam turant available hain."
 
-=== CALL PROCESS (sirf poochne pe) ===
-Website pe click karo, 49rs pay karo, Mam ka number milega, seedha call ya WhatsApp kar sakte hain.
-
-=== SERVICE (sirf poochne pe) ===
+=== SERVICE INFO (sirf poochne pe) ===
 Body massage, B2B massage, extra services, home visit, hotel, short time, full night.
 Price 1500 se shuru, profile pe depend.
 Profiles: College Girl, Office Girl, Russian, Mature, Corporate, Widow.
 All India available.
 `;
 
-const tgKeywords = ['telegram', 'tg id', 'tg username', 'username', 'tumhara id', 'mam ka id', 'mam ka telegram', 'id do', 'id dena', 'id batao', 'contact id'];
+const tgKeywords = ['telegram', 'tg id', 'username', 'mam ka telegram', 'id do', 'id dena', 'id batao'];
 
 bot.on('message', async (msg) => {
     const chatId = String(msg.chat.id);
@@ -215,7 +180,7 @@ bot.on('message', async (msg) => {
 
     const s = getSession(chatId);
 
-    // Auto welcome — pehli baar ya /start
+    // Auto welcome
     if (s.state === 'NEW' || text === '/start') {
         logMessage(chatId, `@${username}`, text);
         return sendWelcome(chatId, username);
@@ -225,31 +190,43 @@ bot.on('message', async (msg) => {
     logMessage(chatId, `@${username}`, text);
     resetInactivityTimer(chatId);
 
-    const lowerText = text.toLowerCase();
+    const lowerText = text.toLowerCase().trim();
 
     // City capture
     if (s.state === 'ASK_CITY') {
+        if (isGreet(text)) {
+            const reply = "Ji! Aap batayein — kis city mein service chahiye aapko?";
+            await typingDelay(chatId, reply);
+            logMessage(chatId, 'Priya', reply);
+            return bot.sendMessage(chatId, reply);
+        }
         s.city = text;
         s.state = 'ASK_NAME';
         const reply = `Ji bilkul, ${text} mein hamaari service available hai. Aap apna naam bata sakte hain?`;
         await typingDelay(chatId, reply);
         logMessage(chatId, 'Priya', reply);
-        return bot.sendMessage(chatId, reply, removeKeyboard);
+        return bot.sendMessage(chatId, reply);
     }
 
     // Name capture
     if (s.state === 'ASK_NAME') {
+        if (isGreet(text) || !looksLikeName(text)) {
+            const reply = "Ji, aap apna naam batayein?";
+            await typingDelay(chatId, reply);
+            logMessage(chatId, 'Priya', reply);
+            return bot.sendMessage(chatId, reply);
+        }
         s.name = text;
         s.state = 'CHAT';
-        const reply = `Ji ${text} ji, aap batayein — kaunsi service mein interest hai aapka?`;
+        const reply = `Ji ${text} ji, aap batayein — kaunsi service mein interest hai?`;
         await typingDelay(chatId, reply);
         logMessage(chatId, 'Priya', reply);
-        return bot.sendMessage(chatId, reply, serviceKeyboard);
+        return bot.sendMessage(chatId, reply, callButton);
     }
 
-    // Telegram ID — hardcoded
+    // Telegram ID
     if (tgKeywords.some(k => lowerText.includes(k))) {
-        const reply = "Ji, Mam ka Telegram bhi hai — neeche button se directly message kar sakte hain aap.";
+        const reply = "Ji, Mam ka Telegram hai — neeche se directly message kar sakte hain aap.";
         await typingDelay(chatId, reply);
         logMessage(chatId, 'Priya', reply);
         s.history.push({ role: "assistant", content: reply });
@@ -260,7 +237,7 @@ bot.on('message', async (msg) => {
     const nameFix = text.match(/(?:mera naam|my name is|naam hai|name is)\s+([a-zA-Z]+)/i);
     if (nameFix) {
         s.name = nameFix[1];
-        const reply = `Ji sorry ${s.name} ji! Note kar liya maine.`;
+        const reply = `Ji sorry ${s.name} ji! Note kar liya.`;
         await typingDelay(chatId, reply);
         logMessage(chatId, 'Priya', reply);
         s.history.push({ role: "assistant", content: reply });
@@ -273,7 +250,7 @@ bot.on('message', async (msg) => {
 
     try {
         const avoidText = s.lastReplies.length > 0
-            ? `\nINSTRUCTION: Ye replies KABHI REPEAT MAT KARNA:\n- ${s.lastReplies.join('\n- ')}`
+            ? `\nYe replies REPEAT MAT KARNA:\n- ${s.lastReplies.join('\n- ')}`
             : '';
 
         const completion = await groq.chat.completions.create({
@@ -290,10 +267,7 @@ bot.on('message', async (msg) => {
         });
 
         let reply = completion.choices[0].message.content.trim();
-
-        // Force remove "book" word
         reply = reply.replace(/\bbook(ing)?\b/gi, 'call slot');
-        // Force remove "yaar"
         reply = reply.replace(/\byaar\b/gi, 'ji');
 
         s.lastReplies.push(reply);
