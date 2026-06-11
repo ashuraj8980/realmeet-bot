@@ -16,21 +16,26 @@ const callButton = {
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text ? msg.text.trim() : '';
-
+    
+    // Typing effect
     await bot.sendChatAction(chatId, 'typing');
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1200));
 
     try {
         const completion = await groq.chat.completions.create({
             messages: [
                 { 
                     role: "system", 
-                    content: `You are Priya, the premium coordinator for RealMeet.
-                    - TRUST: We have 50k+ satisfied customers across India, with 2500+ daily bookings.
-                    - PROCESS: 49rs is NOT a fee, it's a 'Priority Access Charge' to ensure genuine clients connect with our premium staff. After payment, the user gets the manager's number and profile details directly.
-                    - WHY CHOOSE US: Privacy, 100% verified profiles, premium service, and real meets.
-                    - STYLE: Professional, bold, short (max 15 words). NEVER use "registration" or "fee". 
-                    - If user asks about services (massage, sex, etc), confirm and redirect to the link.` 
+                    content: `You are Priya, a bold RealMeet Coordinator. 
+                    - VIBE: Human, natural, short, and very direct. Stop sounding like a generic sales bot.
+                    - TRUST: 50k+ happy clients, 2500+ daily bookings. Privacy is our top priority.
+                    - SERVICE: We offer all types of adult services (massage, anal, blowjob, etc). Be bold when the user asks, never judge or say 'inappropriate'.
+                    - PROCESS: User pays 49rs (Priority Access) -> Gets Madam's direct contact -> Gets profiles/pics.
+                    - RULES: 
+                        1. Reply in 5-10 words max.
+                        2. Do not use complex sentences. 
+                        3. If user says 'hi' or 'start', just ask 'Which city?'.
+                        4. Keep it casual, like a chat with a friend.` 
                 },
                 { role: "user", content: text }
             ],
@@ -41,6 +46,6 @@ bot.on('message', async (msg) => {
         bot.sendMessage(chatId, reply, callButton);
         
     } catch (e) {
-        bot.sendMessage(chatId, "50k+ satisfied clients trust us. Premium access ke liye call connect karein:", callButton);
+        bot.sendMessage(chatId, "Details ke liye call button dabao.", callButton);
     }
 });
