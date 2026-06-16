@@ -1,6 +1,5 @@
 import asyncio
 import time
-import os
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from aiohttp import web
@@ -8,14 +7,19 @@ from aiohttp import web
 # --- CONFIGURATION ---
 API_ID = 39946962
 API_HASH = '509f0cca77abf971e3e8040d8b05bb05'
-SESSION_STRING = os.environ.get("SESSION_STRING")
 
-if not SESSION_STRING:
-    print("Error: SESSION_STRING environment variable is missing!")
-    exit(1)
+# Token ko direct code me set kar diya taaki Render variable error na de
+SESSION_STRING = (
+    "1BVtsOLQBuzHv6VySAq9aMGMkgO2OSJFIiO_5r9Dq8BUNJEumZSWLznDeYZGocq3u2RZOybv_"
+    "-xivfQczSSp_IPII4EzyzpC3J3Rk5TN6J9-kBvTWoZQyLi0GR_e0behWJ1qyskGaaq5f-ye8U"
+    "M_q83cTA7Qi_S3SzhFykChaW0MQd6IosKss5-U976NH3oljKysZfDviY6FEK3uH-1kNSO3jOK"
+    "52SMxhtVgjfS_OfQtzokdVer4ByDvwYY_oaOhkXSlpyq783UTkwqZiWOPMLvYKasaTAJEok1w"
+    "JDFa2uc4KboVjQs__kVIg2eDgL5j24KzGLdgDTqwu1qQOcdnQcgCuHmdUbdM="
+)
 
-# String session clean-up (spaces hatane ke liye)
-SESSION_STRING = SESSION_STRING.strip()
+# Agar session string me version prefix ('1') missing ho toh use fix karna
+if SESSION_STRING and not SESSION_STRING.startswith('1'):
+    SESSION_STRING = '1' + SESSION_STRING
 
 client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
 
@@ -79,6 +83,7 @@ async def handle(request):
     return web.Response(text="Bot is running 24/7!")
 
 async def start_web():
+    import os
     app = web.Application()
     app.router.add_get('/', handle)
     port = int(os.environ.get("PORT", 8080))
