@@ -8,9 +8,11 @@ from aiohttp import web
 API_ID = 39946962
 API_HASH = '509f0cca77abf971e3e8040d8b05bb05'
 
-# Solid single-line token string
-SESSION_STRING = "1BVtsOLQBuzHv6VySAq9aMGMkgO2OSJFIiO_5r9Dq8BUNJEumZSWLznDeYZGocq3u2RZOybv_-xivfQczSSp_IPII4EzyzpC3J3Rk5TN6J9-kBvTWoZQyLi0GR_e0behWJ1qyskGaaq5f-ye8UM_q83cTA7Qi_S3SzhFykChaW0MQd6IosKss5-U976NH3oljKysZfDviY6FEK3uH-1kNSO3jOK52SMhtVgjfS_OfQtzokdVer4ByDvwYY_oaOhkXSlpyq783UTkwqZiWOPMLvYKasaTAJEok1wJDFa2uc4KboVjQs__kVIg2eDgL5j24KzGLdgDTqwu1qQOcdnQcgCuHmdUbdM="
+# Clean, single line string token
+RAW_SESSION = "1BVtsOLQBuzHv6VySAq9aMGMkgO2OSJFIiO_5r9Dq8BUNJEumZSWLznDeYZGocq3u2RZOybv_-xivfQczSSp_IPII4EzyzpC3J3Rk5TN6J9-kBvTWoZQyLi0GR_e0behWJ1qyskGaaq5f-ye8UM_q83cTA7Qi_S3SzhFykChaW0MQd6IosKss5-U976NH3oljKysZfDviY6FEK3uH-1kNSO3jOK52SMhtVgjfS_OfQtzokdVer4ByDvwYY_oaOhkXSlpyq783UTkwqZiWOPMLvYKasaTAJEok1wJDFa2uc4KboVjQs__kVIg2eDgL5j24KzGLdgDTqwu1qQOcdnQcgCuHmdUbdM="
 
+# Padding and spaces automatic cleaner to avoid crash
+SESSION_STRING = RAW_SESSION.strip().replace(" ", "").replace("\n", "").replace("\r", "")
 if SESSION_STRING and not SESSION_STRING.startswith('1'):
     SESSION_STRING = '1' + SESSION_STRING
 
@@ -122,31 +124,25 @@ async def handle_outgoing_messages(event):
         user_db[user_id]['paused'] = True
         user_db[user_id]['unanswered_count'] = 0  
 
-# --- SIMPLIFIED WEB SERVER INTEGRATION FOR RENDER ---
+# --- WEB SERVER INTEGRATION FOR RENDER ---
 async def home_handle(request):
-    return web.Response(text="Bot running perfectly 24/7!")
+    return web.Response(text="Bot is running smoothly 24/7 with auto-resume!")
 
 async def main():
-    # Setup simple application runner
     app = web.Application()
     app.router.add_get('/', home_handle)
     
     runner = web.AppRunner(app)
     await runner.setup()
     
-    # Simple and direct port binding
     port = int(os.environ.get("PORT", 8080))
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
-    print(f"Web server started on port {port}")
 
-    # Start the telegram client session
     await client.start()
-    print("Telegram client started successfully.")
     await client.run_until_disconnected()
 
 if __name__ == '__main__':
-    # Standard clean async execution setup
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
     
