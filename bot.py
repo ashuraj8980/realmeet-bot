@@ -8,7 +8,6 @@ from aiohttp import web
 API_ID = 39946962
 API_HASH = '509f0cca77abf971e3e8040d8b05bb05'
 
-# Token ko direct code me set kar diya taaki Render variable error na de
 SESSION_STRING = (
     "1BVtsOLQBuzHv6VySAq9aMGMkgO2OSJFIiO_5r9Dq8BUNJEumZSWLznDeYZGocq3u2RZOybv_"
     "-xivfQczSSp_IPII4EzyzpC3J3Rk5TN6J9-kBvTWoZQyLi0GR_e0behWJ1qyskGaaq5f-ye8U"
@@ -17,7 +16,6 @@ SESSION_STRING = (
     "JDFa2uc4KboVjQs__kVIg2eDgL5j24KzGLdgDTqwu1qQOcdnQcgCuHmdUbdM="
 )
 
-# Agar session string me version prefix ('1') missing ho toh use fix karna
 if SESSION_STRING and not SESSION_STRING.startswith('1'):
     SESSION_STRING = '1' + SESSION_STRING
 
@@ -92,9 +90,17 @@ async def start_web():
     site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
 
-print("Smart Bot Connecting...")
-loop = asyncio.get_event_loop()
-loop.create_task(start_web())
+async def main():
+    print("Smart Bot Connecting...")
+    # Web server ko main loop me start kar rahe hain taaki thread error na aaye
+    await start_web()
+    
+    # Telethon client ko start aur run karenge
+    await client.start()
+    print("RealMeet Anti-Spam Userbot Is Running Safely on Render!")
+    await client.run_until_disconnected()
 
-client.start()
-client.run_until_disconnected()
+if __name__ == '__main__':
+    # Python ke naye loop system ke mutabik sahi initiation
+    asyncio.run(main())
+    
