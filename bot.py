@@ -8,12 +8,15 @@ from aiohttp import web
 API_ID = 39946962
 API_HASH = '509f0cca77abf971e3e8040d8b05bb05'
 
-# Token string formatted in a single solid line to prevent padding errors
-SESSION_STRING = "1BVtsOLQBuzHv6VySAq9aMGMkgO2OSJFIiO_5r9Dq8BUNJEumZSWLznDeYZGocq3u2RZOybv_-xivfQczSSp_IPII4EzyzpC3J3Rk5TN6J9-kBvTWoZQyLi0GR_e0behWJ1qyskGaaq5f-ye8UM_q83cTA7Qi_S3SzhFykChaW0MQd6IosKss5-U976NH3oljKysZfDviY6FEK3uH-1kNSO3jOK52SMxhtVgjfS_OfQtzokdVer4ByDvwYY_oaOhkXSlpyq783UTkwqZiWOPMLvYKasaTAJEok1wJDFa2uc4KboVjQs__kVIg2eDgL5j24KzGLdgDTqwu1qQOcdnQcgCuHmdUbdM="
+# Solid token string inside the code
+SESSION_STRING = "1BVtsOLQBuzHv6VySAq9aMGMkgO2OSJFIiO_5r9Dq8BUNJEumZSWLznDeYZGocq3u2RZOybv_-xivfQczSSp_IPII4EzyzpC3J3Rk5TN6J9-kBvTWoZQyLi0GR_e0behWJ1qyskGaaq5f-ye8UM_q83cTA7Qi_S3SzhFykChaW0MQd6IosKss5-U976NH3oljKysZfDviY6FEK3uH-1kNSO3jOK52SMhtVgjfS_OfQtzokdVer4ByDvwYY_oaOhkXSlpyq783UTkwqZiWOPMLvYKasaTAJEok1wJDFa2uc4KboVjQs__kVIg2eDgL5j24KzGLdgDTqwu1qQOcdnQcgCuHmdUbdM="
+
+if SESSION_STRING and not SESSION_STRING.startswith('1'):
+    SESSION_STRING = '1' + SESSION_STRING
 
 client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
 
-# Multi-user tracking database
+# Tracking state storage
 user_db = {}
 
 def get_user_status(user_id):
@@ -27,17 +30,16 @@ def get_user_status(user_id):
     return user_db[user_id]
 
 async def send_human_reply(event, text, delay=3):
-    """Simulates realistic human typing and replies directly by sliding the message"""
+    """Simulates typing behavior and slides/replies to the text explicitly"""
     try:
         async with client.action(event.chat_id, 'typing'):
             await asyncio.sleep(delay)
         
         status = get_user_status(event.sender_id)
-        # Process reply if bot is active
         if not status['paused']:
             await event.reply(text)
     except Exception as e:
-        print(f"Reply Action Error: {e}")
+        print(f"Reply Error: {e}")
 
 @client.on(events.NewMessage(incoming=True))
 async def handle_incoming_messages(event):
@@ -51,7 +53,6 @@ async def handle_incoming_messages(event):
 
     status = get_user_status(user_id)
 
-    # Ignore duplicated old updates
     if event.id <= status['last_msg_id']:
         return
     status['last_msg_id'] = event.id
@@ -61,7 +62,7 @@ async def handle_incoming_messages(event):
     # --- AUTO-RESUME LOGIC ---
     if status['paused']:
         status['unanswered_count'] += 1
-        # Agar aapne chat chodi aur user ne 2 ya usse zyada messages bheje, bot triggers back on
+        # If user texts 2 or more times while you are away, bot handles it
         if status['unanswered_count'] >= 2:
             status['paused'] = False  
             status['unanswered_count'] = 0
@@ -73,15 +74,15 @@ async def handle_incoming_messages(event):
         await send_human_reply(event, "Theek hai sir, check kiya ja raha hai. ✅ Aap jaldi se website par login karke apna slot confirm kijiye, wahan se call details aur number mil jayega.")
         return
 
-    # --- 2. CONVERSATIONAL STEP FLOW ---
+    # --- 2. STEP FLOW ---
     
-    # Step 0: Friendly Greeting
+    # Step 0: Greeting handling
     if status['step'] == 0:
         status['step'] = 1
         await send_human_reply(event, "Hello sir! 😊 Yes, real meet service available hai. Aap kis city ya area se hain?")
         return
 
-    # Step 1: Destination confirmation and strategic booking request
+    # Step 1: Handling City & Convincing
     elif status['step'] == 1:
         status['step'] = 2
         convince_pitch = (
@@ -103,7 +104,7 @@ async def handle_incoming_messages(event):
         )
 
 async def send_followup(chat_id, user_id):
-    """Automatic background follow-up after 7.5 minutes"""
+    """Automatic background follow up after 7.5 mins"""
     await asyncio.sleep(450) 
     if user_id in user_db:
         status = user_db[user_id]
@@ -118,7 +119,7 @@ async def send_followup(chat_id, user_id):
 
 @client.on(events.NewMessage(outgoing=True))
 async def handle_outgoing_messages(event):
-    """Pauses the bot immediately when you send a manual reply from your device"""
+    """When you type from your app, bot pauses and unanswered counter resets"""
     if not event.is_private:
         return
     user_id = event.chat_id
@@ -126,14 +127,21 @@ async def handle_outgoing_messages(event):
         user_db[user_id]['paused'] = True
         user_db[user_id]['unanswered_count'] = 0  
 
-# --- BACKGROUND WEB KEEPALIVE SERVER ---
+# --- FIXED KEEPALIVE WEB SERVER OPERATION ---
 async def home_handle(request):
-    return web.Response(text="Bot running perfectly 24/7 with auto-resume!")
+    return web.Response(text="Bot is running smoothly 24/7 with fixed site runner!")
 
 async def start_web_server():
     app = web.Application()
     app.router.add_get('/', home_handle)
-    await web.TCPSite(web.AppRunner(app), '0.0.0.0', int(os.environ.get("PORT", 8080))).start()
+    
+    # Proper sequence to prevent 'runner.setup()' runtime error
+    runner = web.AppRunner(app)
+    await runner.setup()
+    
+    port = int(os.environ.get("PORT", 8080))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
 
 async def main():
     await start_web_server()
@@ -142,4 +150,4 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
-        
+    
